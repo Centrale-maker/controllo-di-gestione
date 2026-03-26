@@ -1,0 +1,79 @@
+import { useEffect, useState } from 'react'
+import { CheckCircle, XCircle, Loader2, FileSpreadsheet } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { formatDate } from '@/lib/utils'
+import type { Upload } from '@/types'
+
+interface Props {
+  refreshKey?: number
+}
+
+export default function UploadHistory({ refreshKey = 0 }: Props) {
+  const [uploads, setUploads] = useState<Upload[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('uploads')
+          .select('*')
+          .order('uploaded_at', { ascending: false })
+          .limit(10)
+        if (error) throw error
+        setUploads((data ?? []) as Upload[])
+      } catch {
+        // errore silenzioso — la lista resterà vuota
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [refreshKey])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 size={20} className="animate-spin text-[#64748B]" />
+      </div>
+    )
+  }
+
+  if (uploads.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 gap-2 text-[#64748B]">
+        <FileSpreadsheet size={32} className="opacity-40" />
+        <p className="text-sm">Nessun upload ancora</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {uploads.map(u => (
+        <div key={u.id} className="flex items-center gap-3 bg-white rounded-lg border border-[#E2E8F0] px-4 py-3">
+          {u.status === 'success' && <CheckCircle size={18} className="text-[#10B981] shrink-0" />}
+          {u.status === 'error' && <XCircle size={18} className="text-[#EF4444] shrink-0" />}
+          {u.status === 'processing' && <Loader2 size={18} className="animate-spin text-[#F59E0B] shrink-0" />}
+
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-[#1A202C] truncate">{u.filename}</p>
+            <p className="text-xs text-[#64748B]">{formatDate(u.uploaded_at)}</p>
+          </div>
+
+          {u.status === 'success' && (
+            <div className="text-right shrink-0">
+              <p className="text-xs font-medium text-[#1A202C]">{u.row_count} righe</p>
+              <p className="text-xs text-[#64748B]">+{u.rows_added} ~{u.rows_updated}</p>
+            </div>
+          )}
+
+          {u.status === 'error' && (
+            <span className="text-xs text-[#EF4444] shrink-0">Errore</span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
