@@ -19,9 +19,9 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
   { path: '/analytics', label: 'Analytics', icon: <BarChart2 size={20} /> },
-  { path: '/upload', label: 'Upload', icon: <Upload size={20} />, minRole: 'editor' },
-  { path: '/storico', label: 'Storico', icon: <History size={20} />, minRole: 'admin' },
-  { path: '/settings', label: 'Impostazioni', icon: <Settings size={20} />, minRole: 'admin' },
+  { path: '/storico', label: 'Storico', icon: <History size={20} /> },
+  { path: '/settings', label: 'Impostazioni', icon: <Settings size={20} /> },
+  { path: '/upload', label: 'Upload', icon: <Upload size={20} /> },
 ]
 
 

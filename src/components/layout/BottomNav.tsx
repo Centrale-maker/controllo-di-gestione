@@ -14,8 +14,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={22} /> },
-  { path: '/upload', label: 'Upload', icon: <Upload size={22} /> },
   { path: '/analytics', label: 'Analytics', icon: <BarChart2 size={22} /> },
+  { path: '/upload', label: 'Upload', icon: <Upload size={22} /> },
 ]
 
 export default function BottomNav() {
