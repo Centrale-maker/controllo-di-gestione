@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/hooks/useAuth'
+import { FiltersProvider } from '@/contexts/FiltersContext'
 import AuthGuard from '@/components/AuthGuard'
 import AppLayout from '@/components/layout/AppLayout'
 import Login from '@/pages/Login'
@@ -20,6 +21,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <FiltersProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
 
@@ -39,6 +41,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </FiltersProvider>
       </AuthProvider>
     </BrowserRouter>
   )
