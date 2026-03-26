@@ -1,56 +1,92 @@
-import { useMemo } from 'react'
-import { Search, X } from 'lucide-react'
+import { useState } from 'react'
+import { Search, SlidersHorizontal } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
+import { useFilterOptions } from '@/hooks/useFilterOptions'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import KPIStrip from '@/components/kpi/KPIStrip'
 import DataView from '@/components/tables/DataView'
+import FilterPanel from '@/components/filters/FilterPanel'
+import FilterBottomSheet from '@/components/filters/FilterBottomSheet'
 
 export default function Dashboard() {
+  const isMobile = useIsMobile()
+  const [sheetOpen, setSheetOpen] = useState(false)
+
   const { filters, setFilter, resetFilters, activeCount } = useFilters()
   const { purchases, loading, error } = usePurchases(filters)
+  const options = useFilterOptions()
 
-  const searchValue = filters.searchText
+  const filterProps = { filters, options, activeCount, setFilter, resetFilters }
 
-  const summary = useMemo(() => {
-    if (loading) return null
-    return `${purchases.length.toLocaleString('it-IT')} fatture`
-  }, [purchases.length, loading])
-
-  return (
-    <div className="px-4 py-6 space-y-6 max-w-screen-xl mx-auto">
+  const content = (
+    <div className="space-y-4">
       {/* KPI */}
       <KPIStrip purchases={purchases} />
 
-      {/* Search bar */}
+      {/* Search */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
           <input
             type="text"
-            value={searchValue}
+            value={filters.searchText}
             onChange={e => setFilter('searchText', e.target.value)}
             placeholder="Cerca fornitore o descrizione..."
             className="w-full h-10 pl-9 pr-3 rounded-lg border border-[#E2E8F0] text-sm text-[#1A202C] placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
           />
         </div>
-        {activeCount > 0 && (
+        {isMobile && (
           <button
-            onClick={resetFilters}
-            className="flex items-center gap-1.5 h-10 px-3 rounded-lg border border-[#E2E8F0] text-sm font-medium text-[#64748B] hover:bg-[#F8FAFC] transition-colors whitespace-nowrap"
+            onClick={() => setSheetOpen(true)}
+            className="relative flex items-center gap-1.5 h-10 px-3 rounded-lg border border-[#E2E8F0] text-sm font-medium text-[#64748B] shrink-0"
           >
-            <X size={14} />
-            Reset ({activeCount})
+            <SlidersHorizontal size={15} />
+            Filtri
+            {activeCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-[#1E3A5F] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                {activeCount}
+              </span>
+            )}
           </button>
         )}
       </div>
 
-      {/* Count label */}
-      {summary && (
-        <p className="text-xs text-[#64748B] -mt-4">{summary}</p>
+      {!loading && (
+        <p className="text-xs text-[#64748B]">
+          {purchases.length.toLocaleString('it-IT')} fatture
+          {activeCount > 0 && (
+            <button onClick={resetFilters} className="ml-2 text-[#3B82F6] hover:underline">
+              Reset filtri
+            </button>
+          )}
+        </p>
       )}
 
-      {/* Data */}
       <DataView purchases={purchases} loading={loading} error={error} />
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <div className="px-4 py-4">
+        {content}
+        <FilterBottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} {...filterProps} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full">
+      {/* Sidebar filtri */}
+      <aside className="w-72 shrink-0 border-r border-[#E2E8F0] bg-white overflow-y-auto p-5">
+        <FilterPanel {...filterProps} />
+      </aside>
+
+      {/* Contenuto */}
+      <main className="flex-1 overflow-y-auto px-6 py-6">
+        {content}
+      </main>
     </div>
   )
 }
