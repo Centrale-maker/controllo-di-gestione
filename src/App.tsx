@@ -6,6 +6,7 @@ import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import Analytics from '@/pages/Analytics'
 import Upload from '@/pages/Upload'
+import Settings from '@/pages/Settings'
 
 function ComingSoon({ page }: { page: string }) {
   return (
@@ -31,7 +32,7 @@ export default function App() {
               <Route path="/analytics" element={<Analytics />} />
 <Route path="/upload" element={<Upload />} />
               <Route path="/storico" element={<ComingSoon page="Storico" />} />
-              <Route path="/settings" element={<ComingSoon page="Impostazioni" />} />
+              <Route path="/settings" element={<Settings />} />
 
             </Route>
           </Route>
