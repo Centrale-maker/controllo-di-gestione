@@ -9,15 +9,16 @@ import type { RowPatch } from './RowEditModal'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases:       Purchase[]
-  loading:         boolean
-  error:           string | null
-  options:         FilterOptions
-  onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
-  onRowUpdate:     (id: string, patch: RowPatch) => Promise<void>
+  purchases:         Purchase[]
+  loading:           boolean
+  error:             string | null
+  options:           FilterOptions
+  onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onRowUpdate:       (id: string, patch: RowPatch) => Promise<void>
+  highlightUploadId: string | null
 }
 
-export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRowUpdate }: Props) {
+export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRowUpdate, highlightUploadId }: Props) {
   const isMobile = useIsMobile()
   const [editingRow, setEditingRow] = useState<Purchase | null>(null)
 
@@ -40,8 +41,8 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
   return (
     <>
       {isMobile
-        ? <DataCards purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} />
-        : <DataTable purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} />
+        ? <DataCards purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} highlightUploadId={highlightUploadId} />
+        : <DataTable purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} highlightUploadId={highlightUploadId} />
       }
       <RowEditModal
         purchase={editingRow}

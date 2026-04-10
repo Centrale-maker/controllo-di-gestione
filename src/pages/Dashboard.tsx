@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Search, SlidersHorizontal, Download } from 'lucide-react'
+import { Search, SlidersHorizontal, Download, CheckCheck } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
 import { useFilterOptions } from '@/hooks/useFilterOptions'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useLastUpload } from '@/hooks/useLastUpload'
+import { formatDate } from '@/lib/utils'
 import KPIStrip from '@/components/kpi/KPIStrip'
 import DataView from '@/components/tables/DataView'
 import FilterPanel from '@/components/filters/FilterPanel'
@@ -18,11 +20,34 @@ export default function Dashboard() {
   const { filters, setFilter, resetFilters, activeCount } = useFilters()
   const { purchases, loading, error, updateRinnovi, updateRow } = usePurchases(filters)
   const options = useFilterOptions()
+  const { lastUpload, acknowledge } = useLastUpload()
 
   const filterProps = { filters, options, activeCount, setFilter, resetFilters }
 
+  const newCount = lastUpload ? (lastUpload.rows_added + lastUpload.rows_updated) : 0
+
   const content = (
     <div className="space-y-4">
+      {/* Banner nuovo import */}
+      {lastUpload && newCount > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <p className="text-sm text-emerald-800 truncate">
+              <span className="font-semibold">{newCount} spese</span> aggiunte/aggiornate il{' '}
+              {formatDate(lastUpload.uploaded_at)} — evidenziate in verde
+            </p>
+          </div>
+          <button
+            onClick={acknowledge}
+            className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors"
+          >
+            <CheckCheck size={13} />
+            OK, ho visto
+          </button>
+        </div>
+      )}
+
       {/* KPI */}
       <KPIStrip purchases={purchases} />
 
@@ -82,6 +107,7 @@ export default function Dashboard() {
         options={options}
         onRinnoviChange={updateRinnovi}
         onRowUpdate={updateRow}
+        highlightUploadId={lastUpload?.id ?? null}
       />
     </div>
   )

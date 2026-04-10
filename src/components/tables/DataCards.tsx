@@ -5,15 +5,16 @@ import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases:       Purchase[]
-  onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
-  onEditRow:       (p: Purchase) => void
+  purchases:         Purchase[]
+  onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onEditRow:         (p: Purchase) => void
+  highlightUploadId: string | null
 }
 
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases, onRinnoviChange, onEditRow }: Props) {
+export default function DataCards({ purchases, onRinnoviChange, onEditRow, highlightUploadId }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
   const [saving, setSaving] = useState<Set<string>>(new Set())
 
@@ -31,7 +32,14 @@ export default function DataCards({ purchases, onRinnoviChange, onEditRow }: Pro
   return (
     <div className="space-y-2">
       {slice.map(p => (
-        <div key={p.id} className="bg-white rounded-xl border border-[#E2E8F0] px-4 py-3">
+        <div
+          key={p.id}
+          className={`rounded-xl border px-4 py-3 transition-colors ${
+            highlightUploadId && p.upload_id === highlightUploadId
+              ? 'bg-emerald-50 border-emerald-200'
+              : 'bg-white border-[#E2E8F0]'
+          }`}
+        >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[#1A202C] truncate">{p.fornitore || '—'}</p>

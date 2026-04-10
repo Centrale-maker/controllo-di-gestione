@@ -5,9 +5,10 @@ import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases:       Purchase[]
-  onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
-  onEditRow:       (p: Purchase) => void
+  purchases:         Purchase[]
+  onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onEditRow:         (p: Purchase) => void
+  highlightUploadId: string | null
 }
 
 type SortKey = 'data' | 'fornitore' | 'categoria' | 'centro_costo' | 'imponibile' | 'iva'
@@ -32,7 +33,7 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases, onRinnoviChange, onEditRow }: Props) {
+export default function DataTable({ purchases, onRinnoviChange, onEditRow, highlightUploadId }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
   const [saving, setSaving] = useState<Set<string>>(new Set())
@@ -92,7 +93,14 @@ export default function DataTable({ purchases, onRinnoviChange, onEditRow }: Pro
           </thead>
           <tbody>
             {slice.map(p => (
-              <tr key={p.id} className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors">
+              <tr
+                key={p.id}
+                className={`border-b transition-colors ${
+                  highlightUploadId && p.upload_id === highlightUploadId
+                    ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-100'
+                    : 'border-[#F1F5F9] hover:bg-[#F8FAFC]'
+                }`}
+              >
                 {COLS.map(col => (
                   <td
                     key={col.key}

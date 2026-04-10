@@ -62,6 +62,7 @@ export interface Upload {
   status: 'processing' | 'success' | 'error'
   error_message: string | null
   uploaded_at: string
+  acknowledged_at: string | null
 }
 
 // ─── Profile ─────────────────────────────────────────────────────────────────
