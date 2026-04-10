@@ -29,7 +29,14 @@ const HEADER_MAP: Record<string, string> = {
 
 function toDate(v: unknown): string | null {
   if (!v) return null
-  if (v instanceof Date) return v.toISOString().slice(0, 10)
+  if (v instanceof Date) {
+    // SheetJS con cellDates:true restituisce Date in UTC ma i valori Excel sono
+    // date locali (mezzanotte). In Italia (UTC+2 estate) "3 aprile" diventa
+    // "2026-04-02T22:00:00Z". Aggiungere 12h garantisce la data corretta
+    // per qualsiasi timezone europea (offset < ±12h).
+    const adjusted = new Date(v.getTime() + 12 * 60 * 60 * 1000)
+    return adjusted.toISOString().slice(0, 10)
+  }
   return null
 }
 
@@ -99,16 +106,31 @@ function buildRow(idx: Map<string, number>, row: unknown[]): PurchaseInsert | nu
   }
 }
 
+// Cerca la riga header scansionando le prime N righe: è quella che contiene
+// almeno 2 colonne riconosciute nella HEADER_MAP.
+function findHeaderRowIndex(rows: unknown[][]): number {
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const row = rows[i] as unknown[]
+    const matches = row.filter(h => {
+      const norm = typeof h === 'string' ? h.trim().toLowerCase() : ''
+      return norm !== '' && HEADER_MAP[norm] !== undefined
+    })
+    if (matches.length >= 2) return i
+  }
+  throw new Error('Intestazione colonne non trovata nelle prime 10 righe')
+}
+
 export async function parseExcel(file: File): Promise<PurchaseInsert[]> {
   const buffer = await file.arrayBuffer()
   const wb = XLSX.read(buffer, { type: 'array', cellDates: true })
   const ws = wb.Sheets[wb.SheetNames[0]]
   const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: null })
 
-  if (rows.length < 6) throw new Error('File non valido: meno di 6 righe')
+  if (rows.length < 2) throw new Error('File non valido: meno di 2 righe')
 
-  // Riga 5 (indice 4) = header
-  const headerRow = rows[4] as unknown[]
+  const headerIdx = findHeaderRowIndex(rows)
+  const headerRow = rows[headerIdx] as unknown[]
+
   const fieldIndex = new Map<string, number>()
   headerRow.forEach((h, i) => {
     const norm = typeof h === 'string' ? h.trim().toLowerCase() : ''
@@ -117,7 +139,7 @@ export async function parseExcel(file: File): Promise<PurchaseInsert[]> {
   })
 
   return rows
-    .slice(5)
+    .slice(headerIdx + 1)
     .filter(row => (row as unknown[]).some(c => c !== null))
     .map(row => buildRow(fieldIndex, row as unknown[]))
     .filter((p): p is PurchaseInsert => p !== null)
