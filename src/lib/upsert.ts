@@ -15,6 +15,9 @@ function hasChanged(existing: Purchase, incoming: PurchaseInsert): boolean {
     existing.ft_elettronica === incoming.ft_elettronica &&
     existing.data_ricezione_fe === incoming.data_ricezione_fe &&
     existing.centro_costo === incoming.centro_costo &&
+    existing.cc_tipo === incoming.cc_tipo &&
+    existing.cc_sede === incoming.cc_sede &&
+    existing.cc_cliente === incoming.cc_cliente &&
     existing.categoria === incoming.categoria &&
     existing.fornitore === incoming.fornitore &&
     existing.descrizione === incoming.descrizione &&

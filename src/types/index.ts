@@ -9,6 +9,9 @@ export interface Purchase {
   ft_elettronica: boolean
   data_ricezione_fe: string | null
   centro_costo: string | null
+  cc_tipo: string | null               // es. "Logistica", "Marketing"
+  cc_sede: string | null               // es. "Avezzano", "centrale IGS"
+  cc_cliente: string | null            // es. "AD", "ADB"
   categoria: string | null
   fornitore: string
   descrizione: string
@@ -25,6 +28,18 @@ export interface Purchase {
   deducibilita: boolean
   detraibilita: boolean
   contrassegnato: boolean
+  created_at: string
+  updated_at: string
+}
+
+// ─── CcMapping ───────────────────────────────────────────────────────────────
+
+export interface CcMapping {
+  id: string
+  raw_value: string
+  cc_tipo: string | null
+  cc_sede: string | null
+  cc_cliente: string | null
   created_at: string
   updated_at: string
 }
@@ -75,6 +90,9 @@ export interface FilterState {
   dateRange: DateRange
   scadenzaRange: DateRange
   centroCosto: string[]
+  ccTipo: string[]
+  ccSede: string[]
+  ccCliente: string[]
   categoria: string[]
   fornitore: string[]
   rinnovi: 'ricorrente' | 'una tantum' | null
@@ -94,6 +112,9 @@ export const defaultFilterState: FilterState = {
   dateRange: { from: null, to: null },
   scadenzaRange: { from: null, to: null },
   centroCosto: [],
+  ccTipo: [],
+  ccSede: [],
+  ccCliente: [],
   categoria: [],
   fornitore: [],
   rinnovi: null,
