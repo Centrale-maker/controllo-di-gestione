@@ -88,5 +88,18 @@ export function usePurchases(filters: FilterState) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersKey])
 
-  return { purchases, loading, error }
+  async function updateRinnovi(id: string, value: 'ricorrente' | 'una tantum' | null) {
+    const previous = purchases.find(p => p.id === id)?.rinnovi ?? null
+    setPurchases(prev => prev.map(p => p.id === id ? { ...p, rinnovi: value } : p))
+    const { error } = await supabase
+      .from('purchases')
+      .update({ rinnovi: value })
+      .eq('id', id)
+    if (error) {
+      setPurchases(prev => prev.map(p => p.id === id ? { ...p, rinnovi: previous } : p))
+      throw new Error(error.message)
+    }
+  }
+
+  return { purchases, loading, error, updateRinnovi }
 }

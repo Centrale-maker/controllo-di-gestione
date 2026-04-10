@@ -1,18 +1,30 @@
 import { useState } from 'react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
 
 interface Props {
   purchases: Purchase[]
+  onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
 }
 
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases }: Props) {
+export default function DataCards({ purchases, onRinnoviChange }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
+  const [saving, setSaving] = useState<Set<string>>(new Set())
 
   const slice = purchases.slice(0, visible)
+
+  async function handleRinnovi(id: string, value: 'ricorrente' | 'una tantum' | null) {
+    setSaving(s => new Set(s).add(id))
+    try {
+      await onRinnoviChange(id, value)
+    } finally {
+      setSaving(s => { const next = new Set(s); next.delete(id); return next })
+    }
+  }
 
   return (
     <div className="space-y-2">
@@ -39,6 +51,11 @@ export default function DataCards({ purchases }: Props) {
                 {p.centro_costo}
               </span>
             )}
+            <RinnoviPill
+              value={p.rinnovi ?? null}
+              saving={saving.has(p.id)}
+              onChange={v => handleRinnovi(p.id, v)}
+            />
           </div>
         </div>
       ))}

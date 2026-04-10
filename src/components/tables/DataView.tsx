@@ -8,9 +8,10 @@ interface Props {
   purchases: Purchase[]
   loading: boolean
   error: string | null
+  onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
 }
 
-export default function DataView({ purchases, loading, error }: Props) {
+export default function DataView({ purchases, loading, error, onRinnoviChange }: Props) {
   const isMobile = useIsMobile()
 
   if (loading) {
@@ -29,6 +30,6 @@ export default function DataView({ purchases, loading, error }: Props) {
     )
   }
 
-  if (isMobile) return <DataCards purchases={purchases} />
-  return <DataTable purchases={purchases} />
+  if (isMobile) return <DataCards purchases={purchases} onRinnoviChange={onRinnoviChange} />
+  return <DataTable purchases={purchases} onRinnoviChange={onRinnoviChange} />
 }

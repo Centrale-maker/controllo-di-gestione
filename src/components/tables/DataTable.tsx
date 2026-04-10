@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
 
 interface Props {
   purchases: Purchase[]
+  onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
 }
 
 type SortKey = 'data' | 'fornitore' | 'categoria' | 'centro_costo' | 'imponibile' | 'iva'
@@ -27,13 +29,23 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases }: Props) {
+export default function DataTable({ purchases, onRinnoviChange }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
+  const [saving, setSaving] = useState<Set<string>>(new Set())
 
   function toggleSort(key: SortKey) {
     setSort(s => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
     setPage(0)
+  }
+
+  async function handleRinnovi(id: string, value: 'ricorrente' | 'una tantum' | null) {
+    setSaving(s => new Set(s).add(id))
+    try {
+      await onRinnoviChange(id, value)
+    } finally {
+      setSaving(s => { const next = new Set(s); next.delete(id); return next })
+    }
   }
 
   const sorted = [...purchases].sort((a, b) => {
@@ -67,6 +79,9 @@ export default function DataTable({ purchases }: Props) {
                   </span>
                 </th>
               ))}
+              <th className="px-4 py-3 font-medium text-[#64748B] text-left whitespace-nowrap">
+                Tipo costo
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -80,6 +95,13 @@ export default function DataTable({ purchases }: Props) {
                     {col.render(p)}
                   </td>
                 ))}
+                <td className="px-4 py-2.5">
+                  <RinnoviPill
+                    value={p.rinnovi ?? null}
+                    saving={saving.has(p.id)}
+                    onChange={v => handleRinnovi(p.id, v)}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
