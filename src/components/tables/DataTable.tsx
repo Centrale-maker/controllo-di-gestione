@@ -12,15 +12,17 @@ interface Props {
 type SortKey = 'data' | 'fornitore' | 'categoria' | 'centro_costo' | 'imponibile' | 'iva'
 
 interface Col {
-  key: SortKey
+  key: SortKey | 'descrizione'
   label: string
   render: (p: Purchase) => string
   align?: 'right'
+  sortable?: false
 }
 
 const COLS: Col[] = [
   { key: 'data', label: 'Data', render: p => formatDate(p.data) },
   { key: 'fornitore', label: 'Fornitore', render: p => p.fornitore },
+  { key: 'descrizione', label: 'Descrizione', render: p => p.descrizione ?? '—', sortable: false },
   { key: 'categoria', label: 'Categoria', render: p => p.categoria ?? '—' },
   { key: 'centro_costo', label: 'Centro Costo', render: p => p.centro_costo ?? '—' },
   { key: 'imponibile', label: 'Imponibile', render: p => formatCurrency(Number(p.imponibile)), align: 'right' },
@@ -34,7 +36,8 @@ export default function DataTable({ purchases, onRinnoviChange }: Props) {
   const [page, setPage] = useState(0)
   const [saving, setSaving] = useState<Set<string>>(new Set())
 
-  function toggleSort(key: SortKey) {
+  function toggleSort(key: SortKey | 'descrizione') {
+    if (key === 'descrizione') return
     setSort(s => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
     setPage(0)
   }
@@ -68,14 +71,15 @@ export default function DataTable({ purchases, onRinnoviChange }: Props) {
                 <th
                   key={col.key}
                   onClick={() => toggleSort(col.key)}
-                  className={`px-4 py-3 font-medium text-[#64748B] cursor-pointer hover:text-[#1A202C] select-none whitespace-nowrap ${col.align === 'right' ? 'text-right' : 'text-left'}`}
+                  className={`px-4 py-3 font-medium text-[#64748B] select-none whitespace-nowrap ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.sortable === false ? '' : 'cursor-pointer hover:text-[#1A202C]'}`}
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
-                    {sort.key === col.key
-                      ? sort.dir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-                      : <ChevronDown size={14} className="opacity-30" />
-                    }
+                    {col.sortable !== false && (
+                      sort.key === col.key
+                        ? sort.dir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+                        : <ChevronDown size={14} className="opacity-30" />
+                    )}
                   </span>
                 </th>
               ))}
@@ -90,7 +94,7 @@ export default function DataTable({ purchases, onRinnoviChange }: Props) {
                 {COLS.map(col => (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 text-[#1A202C] max-w-[200px] truncate ${col.align === 'right' ? 'text-right font-medium' : ''}`}
+                    className={`px-4 py-3 text-[#1A202C] truncate ${col.key === 'descrizione' ? 'max-w-[280px]' : 'max-w-[200px]'} ${col.align === 'right' ? 'text-right font-medium' : ''}`}
                   >
                     {col.render(p)}
                   </td>
