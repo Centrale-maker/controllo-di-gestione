@@ -105,5 +105,21 @@ export function usePurchases(filters: FilterState) {
     }
   }
 
-  return { purchases, loading, error, updateRinnovi }
+  async function updateRow(
+    id: string,
+    patch: Partial<Pick<Purchase, 'cc_tipo' | 'cc_sede' | 'cc_cliente' | 'categoria' | 'targhe'>>
+  ) {
+    const previous = purchases.find(p => p.id === id)
+    if (!previous) return
+    // optimistic update
+    setPurchases(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p))
+    const { error } = await supabase.from('purchases').update(patch).eq('id', id)
+    if (error) {
+      // revert
+      setPurchases(prev => prev.map(p => p.id === id ? previous : p))
+      throw new Error(error.message)
+    }
+  }
+
+  return { purchases, loading, error, updateRinnovi, updateRow }
 }

@@ -1,18 +1,25 @@
+import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import type { FilterOptions } from '@/hooks/useFilterOptions'
 import DataTable from './DataTable'
 import DataCards from './DataCards'
+import RowEditModal from './RowEditModal'
+import type { RowPatch } from './RowEditModal'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases: Purchase[]
-  loading: boolean
-  error: string | null
+  purchases:       Purchase[]
+  loading:         boolean
+  error:           string | null
+  options:         FilterOptions
   onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onRowUpdate:     (id: string, patch: RowPatch) => Promise<void>
 }
 
-export default function DataView({ purchases, loading, error, onRinnoviChange }: Props) {
+export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRowUpdate }: Props) {
   const isMobile = useIsMobile()
+  const [editingRow, setEditingRow] = useState<Purchase | null>(null)
 
   if (loading) {
     return (
@@ -30,6 +37,18 @@ export default function DataView({ purchases, loading, error, onRinnoviChange }:
     )
   }
 
-  if (isMobile) return <DataCards purchases={purchases} onRinnoviChange={onRinnoviChange} />
-  return <DataTable purchases={purchases} onRinnoviChange={onRinnoviChange} />
+  return (
+    <>
+      {isMobile
+        ? <DataCards purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} />
+        : <DataTable purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} />
+      }
+      <RowEditModal
+        purchase={editingRow}
+        options={options}
+        onSave={onRowUpdate}
+        onClose={() => setEditingRow(null)}
+      />
+    </>
+  )
 }

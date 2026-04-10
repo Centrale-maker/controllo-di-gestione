@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [exportOpen, setExportOpen] = useState(false)
 
   const { filters, setFilter, resetFilters, activeCount } = useFilters()
-  const { purchases, loading, error, updateRinnovi } = usePurchases(filters)
+  const { purchases, loading, error, updateRinnovi, updateRow } = usePurchases(filters)
   const options = useFilterOptions()
 
   const filterProps = { filters, options, activeCount, setFilter, resetFilters }
@@ -75,7 +75,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      <DataView purchases={purchases} loading={loading} error={error} onRinnoviChange={updateRinnovi} />
+      <DataView
+        purchases={purchases}
+        loading={loading}
+        error={error}
+        options={options}
+        onRinnoviChange={updateRinnovi}
+        onRowUpdate={updateRow}
+      />
     </div>
   )
 

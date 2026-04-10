@@ -1,17 +1,19 @@
 import { useState } from 'react'
+import { Pencil } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases: Purchase[]
+  purchases:       Purchase[]
   onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onEditRow:       (p: Purchase) => void
 }
 
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases, onRinnoviChange }: Props) {
+export default function DataCards({ purchases, onRinnoviChange, onEditRow }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
   const [saving, setSaving] = useState<Set<string>>(new Set())
 
@@ -35,9 +37,18 @@ export default function DataCards({ purchases, onRinnoviChange }: Props) {
               <p className="text-sm font-semibold text-[#1A202C] truncate">{p.fornitore || '—'}</p>
               <p className="text-xs text-[#64748B] truncate mt-0.5">{p.descrizione || '—'}</p>
             </div>
-            <p className="text-sm font-bold text-[#1A202C] shrink-0 tabular-nums">
-              {formatCurrency(Number(p.imponibile))}
-            </p>
+            <div className="flex items-center gap-1 shrink-0">
+              <p className="text-sm font-bold text-[#1A202C] tabular-nums">
+                {formatCurrency(Number(p.imponibile))}
+              </p>
+              <button
+                onClick={() => onEditRow(p)}
+                className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"
+                title="Modifica classificazione"
+              >
+                <Pencil size={14} />
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <span className="text-xs text-[#64748B]">{formatDate(p.data)}</span>

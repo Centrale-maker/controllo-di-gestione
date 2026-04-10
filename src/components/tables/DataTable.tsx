@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, Pencil } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases: Purchase[]
+  purchases:       Purchase[]
   onRinnoviChange: (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onEditRow:       (p: Purchase) => void
 }
 
 type SortKey = 'data' | 'fornitore' | 'categoria' | 'centro_costo' | 'imponibile' | 'iva'
@@ -31,7 +32,7 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases, onRinnoviChange }: Props) {
+export default function DataTable({ purchases, onRinnoviChange, onEditRow }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
   const [saving, setSaving] = useState<Set<string>>(new Set())
@@ -86,6 +87,7 @@ export default function DataTable({ purchases, onRinnoviChange }: Props) {
               <th className="px-4 py-3 font-medium text-[#64748B] text-left whitespace-nowrap">
                 Tipo costo
               </th>
+              <th className="w-10" />
             </tr>
           </thead>
           <tbody>
@@ -105,6 +107,15 @@ export default function DataTable({ purchases, onRinnoviChange }: Props) {
                     saving={saving.has(p.id)}
                     onChange={v => handleRinnovi(p.id, v)}
                   />
+                </td>
+                <td className="px-2 py-2.5">
+                  <button
+                    onClick={() => onEditRow(p)}
+                    className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"
+                    title="Modifica classificazione"
+                  >
+                    <Pencil size={14} />
+                  </button>
                 </td>
               </tr>
             ))}
