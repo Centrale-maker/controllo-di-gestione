@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { Search, SlidersHorizontal, Download } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
 import { useFilterOptions } from '@/hooks/useFilterOptions'
@@ -8,10 +8,12 @@ import KPIStrip from '@/components/kpi/KPIStrip'
 import DataView from '@/components/tables/DataView'
 import FilterPanel from '@/components/filters/FilterPanel'
 import FilterBottomSheet from '@/components/filters/FilterBottomSheet'
+import ExportDialog from '@/components/export/ExportDialog'
 
 export default function Dashboard() {
   const isMobile = useIsMobile()
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [sheetOpen, setSheetOpen]   = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const { filters, setFilter, resetFilters, activeCount } = useFilters()
   const { purchases, loading, error, updateRinnovi } = usePurchases(filters)
@@ -53,18 +55,37 @@ export default function Dashboard() {
       </div>
 
       {!loading && (
-        <p className="text-xs text-[#64748B]">
-          {purchases.length.toLocaleString('it-IT')} fatture
-          {activeCount > 0 && (
-            <button onClick={resetFilters} className="ml-2 text-[#3B82F6] hover:underline">
-              Reset filtri
-            </button>
-          )}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-[#64748B]">
+            {purchases.length.toLocaleString('it-IT')} fatture
+            {activeCount > 0 && (
+              <button onClick={resetFilters} className="ml-2 text-[#3B82F6] hover:underline">
+                Reset filtri
+              </button>
+            )}
+          </p>
+          <button
+            onClick={() => setExportOpen(true)}
+            disabled={purchases.length === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC] hover:border-[#1E3A5F] hover:text-[#1E3A5F] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Download size={13} />
+            Esporta
+          </button>
+        </div>
       )}
 
       <DataView purchases={purchases} loading={loading} error={error} onRinnoviChange={updateRinnovi} />
     </div>
+  )
+
+  const exportDialog = (
+    <ExportDialog
+      open={exportOpen}
+      onClose={() => setExportOpen(false)}
+      purchases={purchases}
+      activeFiltersCount={activeCount}
+    />
   )
 
   if (isMobile) {
@@ -72,6 +93,7 @@ export default function Dashboard() {
       <div className="px-4 py-4">
         {content}
         <FilterBottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} {...filterProps} />
+        {exportDialog}
       </div>
     )
   }
@@ -87,6 +109,8 @@ export default function Dashboard() {
       <main className="flex-1 overflow-y-auto px-6 py-6">
         {content}
       </main>
+
+      {exportDialog}
     </div>
   )
 }
