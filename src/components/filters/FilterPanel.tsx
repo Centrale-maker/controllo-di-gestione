@@ -81,13 +81,38 @@ export default function FilterPanel({ filters, options, activeCount, setFilter, 
 
       <div className="h-px bg-[#E2E8F0]" />
 
-      {options.centroCosto.length > 0 && (
+      {/* Centro di costo — strutturato */}
+      {options.ccTipo.length > 0 && (
         <CheckList
-          label="Centro di costo"
-          options={options.centroCosto}
-          selected={filters.centroCosto}
-          onChange={v => setFilter('centroCosto', v)}
+          label="Tipo CC"
+          options={options.ccTipo}
+          selected={filters.ccTipo}
+          onChange={v => setFilter('ccTipo', v)}
         />
+      )}
+
+      {options.ccSede.length > 0 && (
+        <>
+          <div className="h-px bg-[#E2E8F0]" />
+          <CheckList
+            label="Sede"
+            options={options.ccSede}
+            selected={filters.ccSede}
+            onChange={v => setFilter('ccSede', v)}
+          />
+        </>
+      )}
+
+      {options.ccCliente.length > 0 && (
+        <>
+          <div className="h-px bg-[#E2E8F0]" />
+          <CheckList
+            label="Cliente"
+            options={options.ccCliente}
+            selected={filters.ccCliente}
+            onChange={v => setFilter('ccCliente', v)}
+          />
+        </>
       )}
 
       <div className="h-px bg-[#E2E8F0]" />

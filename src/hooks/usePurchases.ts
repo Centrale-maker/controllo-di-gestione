@@ -33,6 +33,15 @@ export function usePurchases(filters: FilterState) {
         if (filters.centroCosto.length > 0) {
           query = query.in('centro_costo', filters.centroCosto)
         }
+        if (filters.ccTipo.length > 0) {
+          query = query.in('cc_tipo', filters.ccTipo)
+        }
+        if (filters.ccSede.length > 0) {
+          query = query.in('cc_sede', filters.ccSede)
+        }
+        if (filters.ccCliente.length > 0) {
+          query = query.in('cc_cliente', filters.ccCliente)
+        }
         if (filters.categoria.length > 0) {
           query = query.in('categoria', filters.categoria)
         }
