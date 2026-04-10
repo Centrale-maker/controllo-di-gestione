@@ -147,6 +147,18 @@ export default function FilterPanel({ filters, options, activeCount, setFilter, 
           onChange={v => setFilter('paese', v)}
         />
       )}
+
+      {options.targhe.length > 0 && (
+        <>
+          <div className="h-px bg-[#E2E8F0]" />
+          <CheckList
+            label="Targa"
+            options={options.targhe}
+            selected={filters.targa}
+            onChange={v => setFilter('targa', v)}
+          />
+        </>
+      )}
     </div>
   )
 }

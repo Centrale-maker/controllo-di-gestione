@@ -15,6 +15,7 @@ export interface Purchase {
   categoria: string | null
   fornitore: string
   descrizione: string
+  targhe: string[] | null
   rinnovi: 'ricorrente' | 'una tantum' | null
   partita_iva: string | null
   codice_fiscale: string | null
@@ -96,6 +97,7 @@ export interface FilterState {
   categoria: string[]
   fornitore: string[]
   rinnovi: 'ricorrente' | 'una tantum' | null
+  targa: string[]
   paese: string[]
   provincia: string[]
   imponibileRange: NumberRange
@@ -118,6 +120,7 @@ export const defaultFilterState: FilterState = {
   categoria: [],
   fornitore: [],
   rinnovi: null,
+  targa: [],
   paese: [],
   provincia: [],
   imponibileRange: { min: null, max: null },

@@ -93,6 +93,17 @@ function parseCentroCosto(raw: string | null, mapping: CcMappingMap): CcParsed {
   return autoParseCc(normalized)
 }
 
+// ─── Estrazione targhe ───────────────────────────────────────────────────────
+
+const TARGA_RE = /\b([A-Z]{2}\d{3}[A-Z]{2})\b/g
+
+/** Estrae tutte le targhe italiane (MM000NN) da una stringa. Restituisce null se nessuna. */
+export function extractTarghe(text: string | null): string[] | null {
+  if (!text) return null
+  const found = [...text.matchAll(TARGA_RE)].map(m => m[1])
+  return found.length > 0 ? [...new Set(found)] : null
+}
+
 // ─── Conversioni tipi ────────────────────────────────────────────────────────
 
 function toDate(v: unknown): string | null {
@@ -170,6 +181,7 @@ function buildRow(
     categoria: toStr(g('categoria')),
     fornitore: toStr(g('fornitore')) ?? '',
     descrizione: toStr(g('descrizione')) ?? '',
+    targhe: extractTarghe(toStr(g('descrizione'))),
     rinnovi: toRinnovi(g('rinnovi')),
     partita_iva: toStr(g('partita_iva')),
     codice_fiscale: toStr(g('codice_fiscale')),

@@ -21,6 +21,7 @@ function hasChanged(existing: Purchase, incoming: PurchaseInsert): boolean {
     existing.categoria === incoming.categoria &&
     existing.fornitore === incoming.fornitore &&
     existing.descrizione === incoming.descrizione &&
+    JSON.stringify(existing.targhe ?? null) === JSON.stringify(incoming.targhe ?? null) &&
     existing.rinnovi === incoming.rinnovi &&
     existing.partita_iva === incoming.partita_iva &&
     existing.codice_fiscale === incoming.codice_fiscale &&
