@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronUp, ChevronDown, Pencil } from 'lucide-react'
+import { ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
@@ -8,6 +8,7 @@ interface Props {
   purchases:         Purchase[]
   onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
   onEditRow:         (p: Purchase) => void
+  onDeleteRow:       (p: Purchase) => void
   highlightUploadId: string | null
 }
 
@@ -33,7 +34,7 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases, onRinnoviChange, onEditRow, highlightUploadId }: Props) {
+export default function DataTable({ purchases, onRinnoviChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
   const [saving, setSaving] = useState<Set<string>>(new Set())
@@ -88,7 +89,7 @@ export default function DataTable({ purchases, onRinnoviChange, onEditRow, highl
               <th className="px-4 py-3 font-medium text-[#64748B] text-left whitespace-nowrap">
                 Tipo costo
               </th>
-              <th className="w-10" />
+              <th className="w-20" />
             </tr>
           </thead>
           <tbody>
@@ -117,13 +118,22 @@ export default function DataTable({ purchases, onRinnoviChange, onEditRow, highl
                   />
                 </td>
                 <td className="px-2 py-2.5">
-                  <button
-                    onClick={() => onEditRow(p)}
-                    className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"
-                    title="Modifica classificazione"
-                  >
-                    <Pencil size={14} />
-                  </button>
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={() => onEditRow(p)}
+                      className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"
+                      title="Modifica classificazione"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => onDeleteRow(p)}
+                      className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#EF4444] hover:bg-red-50 transition-colors"
+                      title="Elimina riga"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

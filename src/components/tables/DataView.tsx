@@ -5,6 +5,7 @@ import type { FilterOptions } from '@/hooks/useFilterOptions'
 import DataTable from './DataTable'
 import DataCards from './DataCards'
 import RowEditModal from './RowEditModal'
+import DeleteConfirmDialog from './DeleteConfirmDialog'
 import type { RowPatch } from './RowEditModal'
 import type { Purchase } from '@/types'
 
@@ -15,12 +16,14 @@ interface Props {
   options:           FilterOptions
   onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
   onRowUpdate:       (id: string, patch: RowPatch) => Promise<void>
+  onDeleteRow:       (id: string) => Promise<void>
   highlightUploadId: string | null
 }
 
-export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRowUpdate, highlightUploadId }: Props) {
+export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRowUpdate, onDeleteRow, highlightUploadId }: Props) {
   const isMobile = useIsMobile()
   const [editingRow, setEditingRow] = useState<Purchase | null>(null)
+  const [deletingRow, setDeletingRow] = useState<Purchase | null>(null)
 
   if (loading) {
     return (
@@ -41,14 +44,31 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
   return (
     <>
       {isMobile
-        ? <DataCards purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} highlightUploadId={highlightUploadId} />
-        : <DataTable purchases={purchases} onRinnoviChange={onRinnoviChange} onEditRow={setEditingRow} highlightUploadId={highlightUploadId} />
+        ? <DataCards
+            purchases={purchases}
+            onRinnoviChange={onRinnoviChange}
+            onEditRow={setEditingRow}
+            onDeleteRow={setDeletingRow}
+            highlightUploadId={highlightUploadId}
+          />
+        : <DataTable
+            purchases={purchases}
+            onRinnoviChange={onRinnoviChange}
+            onEditRow={setEditingRow}
+            onDeleteRow={setDeletingRow}
+            highlightUploadId={highlightUploadId}
+          />
       }
       <RowEditModal
         purchase={editingRow}
         options={options}
         onSave={onRowUpdate}
         onClose={() => setEditingRow(null)}
+      />
+      <DeleteConfirmDialog
+        purchase={deletingRow}
+        onConfirm={onDeleteRow}
+        onClose={() => setDeletingRow(null)}
       />
     </>
   )

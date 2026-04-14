@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import type { Purchase } from '@/types'
@@ -8,13 +8,14 @@ interface Props {
   purchases:         Purchase[]
   onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
   onEditRow:         (p: Purchase) => void
+  onDeleteRow:       (p: Purchase) => void
   highlightUploadId: string | null
 }
 
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases, onRinnoviChange, onEditRow, highlightUploadId }: Props) {
+export default function DataCards({ purchases, onRinnoviChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
   const [saving, setSaving] = useState<Set<string>>(new Set())
 
@@ -55,6 +56,13 @@ export default function DataCards({ purchases, onRinnoviChange, onEditRow, highl
                 title="Modifica classificazione"
               >
                 <Pencil size={14} />
+              </button>
+              <button
+                onClick={() => onDeleteRow(p)}
+                className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#EF4444] hover:bg-red-50 transition-colors"
+                title="Elimina riga"
+              >
+                <Trash2 size={14} />
               </button>
             </div>
           </div>

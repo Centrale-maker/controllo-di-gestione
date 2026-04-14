@@ -121,5 +121,23 @@ export function usePurchases(filters: FilterState) {
     }
   }
 
-  return { purchases, loading, error, updateRinnovi, updateRow }
+  async function deleteRow(id: string) {
+    const previous = purchases.find(p => p.id === id)
+    if (!previous) return
+    // optimistic remove
+    setPurchases(prev => prev.filter(p => p.id !== id))
+    const { error } = await supabase.from('purchases').delete().eq('id', id)
+    if (error) {
+      // revert
+      setPurchases(prev => {
+        const idx = prev.findIndex(p => p.data < previous.data)
+        const next = [...prev]
+        next.splice(idx === -1 ? next.length : idx, 0, previous)
+        return next
+      })
+      throw new Error(error.message)
+    }
+  }
+
+  return { purchases, loading, error, updateRinnovi, updateRow, deleteRow }
 }
