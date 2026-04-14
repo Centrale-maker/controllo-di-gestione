@@ -17,6 +17,7 @@ export interface Purchase {
   descrizione: string
   targhe: string[] | null
   rinnovi: 'ricorrente' | 'una tantum' | null
+  rimborso: 'rimborsata' | 'non rimborsata' | null
   partita_iva: string | null
   codice_fiscale: string | null
   comune: string | null
@@ -98,6 +99,7 @@ export interface FilterState {
   categoria: string[]
   fornitore: string[]
   rinnovi: 'ricorrente' | 'una tantum' | null
+  rimborso: 'rimborsata' | 'non rimborsata' | null
   targa: string[]
   paese: string[]
   provincia: string[]
@@ -121,6 +123,7 @@ export const defaultFilterState: FilterState = {
   categoria: [],
   fornitore: [],
   rinnovi: null,
+  rimborso: null,
   targa: [],
   paese: [],
   provincia: [],

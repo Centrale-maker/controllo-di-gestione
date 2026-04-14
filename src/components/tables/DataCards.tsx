@@ -2,31 +2,43 @@ import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
+import RimborsoPill from './RimborsoPill'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases:         Purchase[]
-  onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
-  onEditRow:         (p: Purchase) => void
-  onDeleteRow:       (p: Purchase) => void
-  highlightUploadId: string | null
+  purchases:          Purchase[]
+  onRinnoviChange:    (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onRimborsoChange:   (id: string, value: 'rimborsata' | 'non rimborsata' | null) => Promise<void>
+  onEditRow:          (p: Purchase) => void
+  onDeleteRow:        (p: Purchase) => void
+  highlightUploadId:  string | null
 }
 
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases, onRinnoviChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
+export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
-  const [saving, setSaving] = useState<Set<string>>(new Set())
+  const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
+  const [savingRimborso, setSavingRimborso] = useState<Set<string>>(new Set())
 
   const slice = purchases.slice(0, visible)
 
   async function handleRinnovi(id: string, value: 'ricorrente' | 'una tantum' | null) {
-    setSaving(s => new Set(s).add(id))
+    setSavingRinnovi(s => new Set(s).add(id))
     try {
       await onRinnoviChange(id, value)
     } finally {
-      setSaving(s => { const next = new Set(s); next.delete(id); return next })
+      setSavingRinnovi(s => { const next = new Set(s); next.delete(id); return next })
+    }
+  }
+
+  async function handleRimborso(id: string, value: 'rimborsata' | 'non rimborsata' | null) {
+    setSavingRimborso(s => new Set(s).add(id))
+    try {
+      await onRimborsoChange(id, value)
+    } finally {
+      setSavingRimborso(s => { const next = new Set(s); next.delete(id); return next })
     }
   }
 
@@ -80,8 +92,13 @@ export default function DataCards({ purchases, onRinnoviChange, onEditRow, onDel
             )}
             <RinnoviPill
               value={p.rinnovi ?? null}
-              saving={saving.has(p.id)}
+              saving={savingRinnovi.has(p.id)}
               onChange={v => handleRinnovi(p.id, v)}
+            />
+            <RimborsoPill
+              value={p.rimborso ?? null}
+              saving={savingRimborso.has(p.id)}
+              onChange={v => handleRimborso(p.id, v)}
             />
           </div>
         </div>

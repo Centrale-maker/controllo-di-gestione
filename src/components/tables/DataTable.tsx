@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
+import RimborsoPill from './RimborsoPill'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases:         Purchase[]
-  onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
-  onEditRow:         (p: Purchase) => void
-  onDeleteRow:       (p: Purchase) => void
-  highlightUploadId: string | null
+  purchases:          Purchase[]
+  onRinnoviChange:    (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onRimborsoChange:   (id: string, value: 'rimborsata' | 'non rimborsata' | null) => Promise<void>
+  onEditRow:          (p: Purchase) => void
+  onDeleteRow:        (p: Purchase) => void
+  highlightUploadId:  string | null
 }
 
 type SortKey = 'data' | 'fornitore' | 'categoria' | 'centro_costo' | 'imponibile' | 'iva'
@@ -34,10 +36,11 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases, onRinnoviChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
+export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
-  const [saving, setSaving] = useState<Set<string>>(new Set())
+  const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
+  const [savingRimborso, setSavingRimborso] = useState<Set<string>>(new Set())
 
   function toggleSort(key: SortKey | 'descrizione') {
     if (key === 'descrizione') return
@@ -46,11 +49,20 @@ export default function DataTable({ purchases, onRinnoviChange, onEditRow, onDel
   }
 
   async function handleRinnovi(id: string, value: 'ricorrente' | 'una tantum' | null) {
-    setSaving(s => new Set(s).add(id))
+    setSavingRinnovi(s => new Set(s).add(id))
     try {
       await onRinnoviChange(id, value)
     } finally {
-      setSaving(s => { const next = new Set(s); next.delete(id); return next })
+      setSavingRinnovi(s => { const next = new Set(s); next.delete(id); return next })
+    }
+  }
+
+  async function handleRimborso(id: string, value: 'rimborsata' | 'non rimborsata' | null) {
+    setSavingRimborso(s => new Set(s).add(id))
+    try {
+      await onRimborsoChange(id, value)
+    } finally {
+      setSavingRimborso(s => { const next = new Set(s); next.delete(id); return next })
     }
   }
 
@@ -89,6 +101,9 @@ export default function DataTable({ purchases, onRinnoviChange, onEditRow, onDel
               <th className="px-4 py-3 font-medium text-[#64748B] text-left whitespace-nowrap">
                 Tipo costo
               </th>
+              <th className="px-4 py-3 font-medium text-[#64748B] text-left whitespace-nowrap">
+                Rimborso
+              </th>
               <th className="w-20" />
             </tr>
           </thead>
@@ -113,8 +128,15 @@ export default function DataTable({ purchases, onRinnoviChange, onEditRow, onDel
                 <td className="px-4 py-2.5">
                   <RinnoviPill
                     value={p.rinnovi ?? null}
-                    saving={saving.has(p.id)}
+                    saving={savingRinnovi.has(p.id)}
                     onChange={v => handleRinnovi(p.id, v)}
+                  />
+                </td>
+                <td className="px-4 py-2.5">
+                  <RimborsoPill
+                    value={p.rimborso ?? null}
+                    saving={savingRimborso.has(p.id)}
+                    onChange={v => handleRimborso(p.id, v)}
                   />
                 </td>
                 <td className="px-2 py-2.5">

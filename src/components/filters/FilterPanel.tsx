@@ -76,6 +76,26 @@ export default function FilterPanel({ filters, options, activeCount, setFilter, 
         </div>
       </div>
 
+      {/* Rimborso */}
+      <div className="space-y-2">
+        <span className="text-xs font-semibold text-[#1A202C] uppercase tracking-wide">Rimborso</span>
+        <div className="flex flex-col gap-1">
+          {([null, 'rimborsata', 'non rimborsata'] as const).map(val => (
+            <label key={String(val)} className="flex items-center gap-2 py-1 px-1 rounded cursor-pointer hover:bg-[#F8FAFC]">
+              <input
+                type="radio"
+                checked={filters.rimborso === val}
+                onChange={() => setFilter('rimborso', val)}
+                className="accent-[#1E3A5F]"
+              />
+              <span className="text-xs text-[#1A202C]">
+                {val === null ? 'Tutti' : val === 'rimborsata' ? 'Rimborsata' : 'Non rimborsata'}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <div className="h-px bg-[#E2E8F0]" />
 
       {/* Centro di costo — strutturato */}

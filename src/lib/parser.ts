@@ -183,6 +183,7 @@ function buildRow(
     descrizione: toStr(g('descrizione')) ?? '',
     targhe: extractTarghe(toStr(g('descrizione'))),
     rinnovi: toRinnovi(g('rinnovi')),
+    rimborso: null,
     partita_iva: toStr(g('partita_iva')),
     codice_fiscale: toStr(g('codice_fiscale')),
     comune: toStr(g('comune')),

@@ -27,7 +27,7 @@ export default function Dashboard() {
   }
 
   const { filters, setFilter, resetFilters, activeCount } = useFilters()
-  const { purchases, loading, error, updateRinnovi, updateRow, deleteRow } = usePurchases(filters)
+  const { purchases, loading, error, updateRinnovi, updateRimborso, updateRow, deleteRow } = usePurchases(filters)
   const options = useFilterOptions()
   const { lastUpload, acknowledge } = useLastUpload()
 
@@ -115,6 +115,7 @@ export default function Dashboard() {
         error={error}
         options={options}
         onRinnoviChange={updateRinnovi}
+        onRimborsoChange={updateRimborso}
         onRowUpdate={updateRow}
         onDeleteRow={deleteRow}
         highlightUploadId={lastUpload?.id ?? null}

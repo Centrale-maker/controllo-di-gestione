@@ -10,17 +10,18 @@ import type { RowPatch } from './RowEditModal'
 import type { Purchase } from '@/types'
 
 interface Props {
-  purchases:         Purchase[]
-  loading:           boolean
-  error:             string | null
-  options:           FilterOptions
-  onRinnoviChange:   (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
-  onRowUpdate:       (id: string, patch: RowPatch) => Promise<void>
-  onDeleteRow:       (id: string) => Promise<void>
-  highlightUploadId: string | null
+  purchases:          Purchase[]
+  loading:            boolean
+  error:              string | null
+  options:            FilterOptions
+  onRinnoviChange:    (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
+  onRimborsoChange:   (id: string, value: 'rimborsata' | 'non rimborsata' | null) => Promise<void>
+  onRowUpdate:        (id: string, patch: RowPatch) => Promise<void>
+  onDeleteRow:        (id: string) => Promise<void>
+  highlightUploadId:  string | null
 }
 
-export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRowUpdate, onDeleteRow, highlightUploadId }: Props) {
+export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRimborsoChange, onRowUpdate, onDeleteRow, highlightUploadId }: Props) {
   const isMobile = useIsMobile()
   const [editingRow, setEditingRow] = useState<Purchase | null>(null)
   const [deletingRow, setDeletingRow] = useState<Purchase | null>(null)
@@ -47,6 +48,7 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
         ? <DataCards
             purchases={purchases}
             onRinnoviChange={onRinnoviChange}
+            onRimborsoChange={onRimborsoChange}
             onEditRow={setEditingRow}
             onDeleteRow={setDeletingRow}
             highlightUploadId={highlightUploadId}
@@ -54,6 +56,7 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
         : <DataTable
             purchases={purchases}
             onRinnoviChange={onRinnoviChange}
+            onRimborsoChange={onRimborsoChange}
             onEditRow={setEditingRow}
             onDeleteRow={setDeletingRow}
             highlightUploadId={highlightUploadId}

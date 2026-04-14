@@ -51,6 +51,9 @@ export function usePurchases(filters: FilterState) {
         if (filters.rinnovi) {
           query = query.eq('rinnovi', filters.rinnovi)
         }
+        if (filters.rimborso) {
+          query = query.eq('rimborso', filters.rimborso)
+        }
         if (filters.targa.length > 0) {
           // ov = overlaps: restituisce righe il cui array targhe ha almeno una targa in comune con il filtro
           query = query.filter('targhe', 'ov', `{${filters.targa.join(',')}}`)
@@ -105,6 +108,19 @@ export function usePurchases(filters: FilterState) {
     }
   }
 
+  async function updateRimborso(id: string, value: 'rimborsata' | 'non rimborsata' | null) {
+    const previous = purchases.find(p => p.id === id)?.rimborso ?? null
+    setPurchases(prev => prev.map(p => p.id === id ? { ...p, rimborso: value } : p))
+    const { error } = await supabase
+      .from('purchases')
+      .update({ rimborso: value })
+      .eq('id', id)
+    if (error) {
+      setPurchases(prev => prev.map(p => p.id === id ? { ...p, rimborso: previous } : p))
+      throw new Error(error.message)
+    }
+  }
+
   async function updateRow(
     id: string,
     patch: Partial<Pick<Purchase, 'cc_tipo' | 'cc_sede' | 'cc_cliente' | 'categoria' | 'targhe'>>
@@ -139,5 +155,5 @@ export function usePurchases(filters: FilterState) {
     }
   }
 
-  return { purchases, loading, error, updateRinnovi, updateRow, deleteRow }
+  return { purchases, loading, error, updateRinnovi, updateRimborso, updateRow, deleteRow }
 }
