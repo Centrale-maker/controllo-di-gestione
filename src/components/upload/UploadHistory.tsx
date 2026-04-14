@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle, XCircle, Loader2, FileSpreadsheet } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, FileSpreadsheet, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
 import type { Upload } from '@/types'
 
 interface Props {
   refreshKey?: number
+  onDeleted?: () => void
 }
 
-export default function UploadHistory({ refreshKey = 0 }: Props) {
+export default function UploadHistory({ refreshKey = 0, onDeleted }: Props) {
   const [uploads, setUploads] = useState<Upload[]>([])
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -31,6 +33,35 @@ export default function UploadHistory({ refreshKey = 0 }: Props) {
     }
     load()
   }, [refreshKey])
+
+  async function handleDelete(u: Upload) {
+    const label = `"${u.filename}" (${u.row_count} righe)`
+    if (!confirm(`Eliminare l'import ${label}?\n\nTutte le spese associate verranno cancellate. Questa azione è irreversibile.`)) return
+
+    setDeletingId(u.id)
+    try {
+      // 1. Cancella le spese associate
+      const { error: purchasesError } = await supabase
+        .from('purchases')
+        .delete()
+        .eq('upload_id', u.id)
+      if (purchasesError) throw new Error(purchasesError.message)
+
+      // 2. Cancella il record upload
+      const { error: uploadError } = await supabase
+        .from('uploads')
+        .delete()
+        .eq('id', u.id)
+      if (uploadError) throw new Error(uploadError.message)
+
+      setUploads(prev => prev.filter(x => x.id !== u.id))
+      onDeleted?.()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Errore durante la cancellazione.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -72,6 +103,18 @@ export default function UploadHistory({ refreshKey = 0 }: Props) {
           {u.status === 'error' && (
             <span className="text-xs text-[#EF4444] shrink-0">Errore</span>
           )}
+
+          <button
+            onClick={() => handleDelete(u)}
+            disabled={deletingId === u.id}
+            title="Elimina import"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#64748B] hover:bg-[#FEF2F2] hover:text-[#EF4444] transition-colors disabled:opacity-40 shrink-0"
+          >
+            {deletingId === u.id
+              ? <Loader2 size={13} className="animate-spin" />
+              : <Trash2 size={13} />
+            }
+          </button>
         </div>
       ))}
     </div>
