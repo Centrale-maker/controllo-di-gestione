@@ -2,18 +2,21 @@ import { useEffect, useState } from 'react'
 import { UserPlus, Pencil, Trash2, Check, X, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { supabaseSignup } from '@/lib/supabaseAdmin'
-import type { Profile } from '@/types'
+import { useAuth } from '@/hooks/useAuth'
+import type { Profile, UserRole } from '@/types'
 
 // ─── Lista utenti ─────────────────────────────────────────────────────────────
 
-function UserList({ refreshKey }: { refreshKey: number }) {
+function UserList({ refreshKey, companyId }: { refreshKey: number; companyId: string | null }) {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [editing, setEditing] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
 
   async function load() {
-    const { data } = await supabase.from('profiles').select('*').order('created_at')
+    let query = supabase.from('profiles').select('*').order('created_at')
+    if (companyId) query = query.eq('company_id', companyId)
+    const { data } = await query
     if (data) setProfiles(data as Profile[])
   }
 
@@ -98,9 +101,9 @@ function UserList({ refreshKey }: { refreshKey: number }) {
 
 // ─── Form nuovo utente ────────────────────────────────────────────────────────
 
-const INITIAL = { nome: '', email: '', password: '', conferma: '' }
+const INITIAL = { nome: '', email: '', password: '', conferma: '', role: 'viewer' as UserRole }
 
-function CreateUserForm({ onCreated }: { onCreated: () => void }) {
+function CreateUserForm({ onCreated, companyId }: { onCreated: () => void; companyId: string | null }) {
   const [form, setForm] = useState(INITIAL)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -128,7 +131,10 @@ function CreateUserForm({ onCreated }: { onCreated: () => void }) {
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({ id: data.user.id, full_name: form.nome.trim(), role: 'viewer' })
+        .upsert(
+          { id: data.user.id, full_name: form.nome.trim(), role: form.role, company_id: companyId },
+          { onConflict: 'id' }
+        )
       if (profileError) throw new Error(profileError.message)
 
       setSuccess(true)
@@ -151,7 +157,7 @@ function CreateUserForm({ onCreated }: { onCreated: () => void }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {[
           { key: 'nome', label: 'Nome completo', type: 'text', placeholder: 'Mario Rossi' },
-          { key: 'email', label: 'Email', type: 'email', placeholder: 'mario@italianglobalsolution.it' },
+          { key: 'email', label: 'Email', type: 'email', placeholder: 'mario@azienda.it' },
           { key: 'password', label: 'Password', type: 'password', placeholder: 'Minimo 6 caratteri' },
           { key: 'conferma', label: 'Conferma password', type: 'password', placeholder: 'Ripeti la password' },
         ].map(f => (
@@ -190,6 +196,8 @@ function CreateUserForm({ onCreated }: { onCreated: () => void }) {
 // ─── Pagina ───────────────────────────────────────────────────────────────────
 
 export default function Settings() {
+  const { profile } = useAuth()
+  const companyId = profile?.company_id ?? null
   const [refreshKey, setRefreshKey] = useState(0)
 
   return (
@@ -199,8 +207,8 @@ export default function Settings() {
         <p className="text-sm text-[#64748B] mt-0.5">Gestione accessi</p>
       </div>
 
-      <UserList refreshKey={refreshKey} />
-      <CreateUserForm onCreated={() => setRefreshKey(k => k + 1)} />
+      <UserList refreshKey={refreshKey} companyId={companyId} />
+      <CreateUserForm onCreated={() => setRefreshKey(k => k + 1)} companyId={companyId} />
     </div>
   )
 }

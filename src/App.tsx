@@ -8,6 +8,7 @@ import Dashboard from '@/pages/Dashboard'
 import Analytics from '@/pages/Analytics'
 import Upload from '@/pages/Upload'
 import Settings from '@/pages/Settings'
+import SuperAdmin from '@/pages/SuperAdmin'
 
 function ComingSoon({ page }: { page: string }) {
   return (
@@ -32,9 +33,12 @@ export default function App() {
               {/* Accessibili a tutti gli utenti autenticati */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/analytics" element={<Analytics />} />
-<Route path="/upload" element={<Upload />} />
+              <Route path="/upload" element={<Upload />} />
               <Route path="/storico" element={<ComingSoon page="Storico" />} />
               <Route path="/settings" element={<Settings />} />
+
+              {/* Solo super_admin */}
+              <Route path="/super-admin" element={<SuperAdmin />} />
 
             </Route>
           </Route>

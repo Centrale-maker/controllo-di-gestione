@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -27,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 export default function Sidebar() {
-  const { profile, role, logout } = useAuth()
+  const { profile, role, isSuperAdmin, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(() =>
     localStorage.getItem('sidebar-collapsed') === 'true'
   )
@@ -93,6 +94,33 @@ export default function Sidebar() {
             {!collapsed && item.label}
           </NavLink>
         ))}
+
+        {isSuperAdmin && (
+          <>
+            {!collapsed && (
+              <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+                Sistema
+              </p>
+            )}
+            {collapsed && <div className="my-2 border-t border-white/10" />}
+            <NavLink
+              to="/super-admin"
+              title={collapsed ? 'Super Admin' : undefined}
+              className={({ isActive }) =>
+                `flex items-center rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+                } ${
+                  isActive
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`
+              }
+            >
+              <ShieldCheck size={20} />
+              {!collapsed && 'Super Admin'}
+            </NavLink>
+          </>
+        )}
       </nav>
 
       {/* User info + logout */}

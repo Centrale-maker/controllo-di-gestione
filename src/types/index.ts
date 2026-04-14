@@ -66,14 +66,27 @@ export interface Upload {
   acknowledged_at: string | null
 }
 
+// ─── Company ─────────────────────────────────────────────────────────────────
+
+export type CompanyPlan = 'trial' | 'pro' | 'enterprise'
+
+export interface Company {
+  id: string
+  name: string
+  slug: string | null
+  plan: CompanyPlan
+  created_at: string
+}
+
 // ─── Profile ─────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'editor' | 'viewer'
+export type UserRole = 'super_admin' | 'admin' | 'editor' | 'viewer'
 
 export interface Profile {
   id: string
   full_name: string | null
   role: UserRole
+  company_id: string | null
   created_at: string
 }
 

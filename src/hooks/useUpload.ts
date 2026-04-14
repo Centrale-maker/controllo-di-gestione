@@ -23,7 +23,7 @@ const INITIAL: UploadState = {
 }
 
 export function useUpload() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [state, setState] = useState<UploadState>(INITIAL)
 
   function reset() {
@@ -31,7 +31,8 @@ export function useUpload() {
   }
 
   async function handleFile(file: File) {
-    if (!user) return
+    if (!user || !profile?.company_id) return
+    const companyId = profile.company_id
     setState({ status: 'parsing', progress: 0, filename: file.name, result: null, error: null })
 
     let uploadId = ''
@@ -40,7 +41,7 @@ export function useUpload() {
       // 1. Crea record upload in stato 'processing'
       const { data: uploadRow, error: insertError } = await supabase
         .from('uploads')
-        .insert({ uploaded_by: user.id, filename: file.name, status: 'processing' })
+        .insert({ uploaded_by: user.id, filename: file.name, status: 'processing', company_id: companyId })
         .select('id')
         .single()
 
@@ -63,7 +64,7 @@ export function useUpload() {
 
       // 4. Upsert con progress
       setState(s => ({ ...s, status: 'uploading' }))
-      const result = await upsertPurchases(purchases, uploadId, pct => {
+      const result = await upsertPurchases(purchases, uploadId, companyId, pct => {
         setState(s => ({ ...s, progress: pct }))
       })
 

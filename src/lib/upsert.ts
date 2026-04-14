@@ -41,11 +41,12 @@ function hasChanged(existing: Purchase, incoming: PurchaseInsert): boolean {
 export async function upsertPurchases(
   purchases: PurchaseInsert[],
   uploadId: string,
+  companyId: string,
   onProgress?: (pct: number) => void
 ): Promise<UpsertResult> {
   if (purchases.length === 0) return { added: 0, updated: 0, unchanged: 0 }
 
-  // Recupera righe esistenti per confronto
+  // Recupera righe esistenti per confronto (RLS filtra già per company)
   const nrAcquisti = [...new Set(purchases.map(p => p.nr_acquisto))]
   const { data: existing, error: fetchError } = await supabase
     .from('purchases')
@@ -69,8 +70,8 @@ export async function upsertPurchases(
   }
 
   // Upsert a blocchi con progress
-  const rows = purchases.map(p => ({ ...p, upload_id: uploadId }))
-  const chunks: (PurchaseInsert & { upload_id: string })[][] = []
+  const rows = purchases.map(p => ({ ...p, upload_id: uploadId, company_id: companyId }))
+  const chunks: (PurchaseInsert & { upload_id: string; company_id: string })[][] = []
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
     chunks.push(rows.slice(i, i + CHUNK_SIZE))
   }
@@ -78,7 +79,7 @@ export async function upsertPurchases(
   for (let i = 0; i < chunks.length; i++) {
     const { error } = await supabase
       .from('purchases')
-      .upsert(chunks[i], { onConflict: 'nr_acquisto,data', ignoreDuplicates: false })
+      .upsert(chunks[i], { onConflict: 'company_id,nr_acquisto,data', ignoreDuplicates: false })
     if (error) throw new Error(error.message)
     onProgress?.(Math.round(((i + 1) / chunks.length) * 100))
   }
