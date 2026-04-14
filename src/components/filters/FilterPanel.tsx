@@ -24,19 +24,16 @@ export default function FilterPanel({ filters, options, activeCount, setFilter, 
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-[#1A202C]">Filtri</h3>
-        {activeCount > 0 && (
-          <button
-            onClick={resetFilters}
-            className="flex items-center gap-1 text-xs text-[#64748B] hover:text-[#1A202C]"
-          >
-            <RotateCcw size={12} />
-            Reset tutti
-          </button>
-        )}
-      </div>
+      {/* Reset filtri */}
+      {activeCount > 0 && (
+        <button
+          onClick={resetFilters}
+          className="flex items-center gap-1 text-xs text-[#64748B] hover:text-[#1A202C]"
+        >
+          <RotateCcw size={12} />
+          Reset tutti
+        </button>
+      )}
 
       {/* Periodo */}
       <div className="space-y-2">
