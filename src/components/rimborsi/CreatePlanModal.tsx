@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Plus, Trash2, AlertCircle, AlertTriangle, Percent, Euro } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { useExpensePlans, type SedeCliente } from '@/hooks/useExpensePlans'
@@ -28,6 +28,53 @@ interface Props {
 
 type SplitMode = 'percent' | 'amount'
 
+// ─── AmountField ──────────────────────────────────────────────────────────────
+// Input testo per importi in euro che:
+// - mostra la stringa grezza (niente round-trip % → €)
+// - accetta virgola come separatore decimale (tastiera italiana)
+// - aggiorna il parent solo onBlur
+
+function AmountField({
+  value,
+  onCommit,
+  placeholder,
+  className,
+}: {
+  value: number
+  onCommit: (amt: number) => void
+  placeholder?: string
+  className?: string
+}) {
+  const [raw, setRaw] = useState(() => value > 0 ? fmtAmt(value) : '')
+  const externalRef = useRef(value)
+
+  // Sincronizza dal parent solo quando il valore cambia esternamente
+  // (es. redistribuzione dopo add/remove sede), non durante la digitazione
+  useEffect(() => {
+    if (externalRef.current !== value) {
+      externalRef.current = value
+      setRaw(value > 0 ? fmtAmt(value) : '')
+    }
+  }, [value])
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      className={className}
+      placeholder={placeholder ?? '0'}
+      value={raw}
+      onChange={e => setRaw(e.target.value)}
+      onBlur={() => {
+        const amt = parseAmt(raw)
+        externalRef.current = amt   // evita il re-sync dal useEffect
+        onCommit(amt)
+        setRaw(amt > 0 ? fmtAmt(amt) : '')
+      }}
+    />
+  )
+}
+
 // ─── CreatePlanModal ──────────────────────────────────────────────────────────
 
 export function CreatePlanModal({
@@ -55,11 +102,10 @@ export function CreatePlanModal({
   const [confirmOverwrite, setConfirmOverwrite] = useState(false)
   const [splitMode, setSplitMode] = useState<SplitMode>('percent')
 
-  const importoNum = parseFloat(importo.replace(',', '.')) || 0
+  const importoNum = parseAmt(importo)
   const importoPerPeriodo = importoNum > 0 && nPeriodi > 0 ? round2(importoNum / nPeriodi) : 0
 
   // ── Importi e residuo ──────────────────────────────────────────────────────
-  // Lo stato è sempre in percentuale. In modalità € convertiamo al volo.
 
   function amountToPerc(amount: number, base: number): number {
     if (base <= 0) return 0
@@ -70,7 +116,6 @@ export function CreatePlanModal({
     return round2(base * perc / 100)
   }
 
-  // Residuo sedi (in €)
   const totaleSediPerc = sedi.reduce((s, x) => s + x.percentuale, 0)
   const residuoSedi = round2(importoPerPeriodo - percToAmount(totaleSediPerc, importoPerPeriodo))
 
@@ -100,13 +145,12 @@ export function CreatePlanModal({
     setSedi(ridistribuisci(sedi.filter((_, i) => i !== idx)))
   }
 
-  function updateSedePerc(idx: number, field: keyof Omit<SedeCliente, 'clienti'>, value: string | number) {
+  function updateSedeField(idx: number, field: keyof Omit<SedeCliente, 'clienti'>, value: string | number) {
     setSedi(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s))
   }
 
-  // In modalità €: l'utente inserisce un importo, convertiamo in %
-  function updateSedeAmount(idx: number, rawAmount: string) {
-    const amt = parseFloat(rawAmount) || 0
+  // In modalità €: importo sede → percentuale
+  function commitSedeAmount(idx: number, amt: number) {
     const perc = amountToPerc(amt, importoPerPeriodo)
     setSedi(prev => prev.map((s, i) => i === idx ? { ...s, percentuale: perc } : s))
   }
@@ -137,7 +181,7 @@ export function CreatePlanModal({
     }))
   }
 
-  function updateClientePerc(sedeIdx: number, clIdx: number, field: string, value: string | number) {
+  function updateClienteField(sedeIdx: number, clIdx: number, field: string, value: string | number) {
     setSedi(prev => prev.map((s, i) => {
       if (i !== sedeIdx) return s
       return { ...s, clienti: s.clienti.map((c, ci) => ci === clIdx ? { ...c, [field]: value } : c) }
@@ -145,9 +189,8 @@ export function CreatePlanModal({
   }
 
   // In modalità €: importo cliente → % relativa alla sede
-  function updateClienteAmount(sedeIdx: number, clIdx: number, rawAmount: string) {
+  function commitClienteAmount(sedeIdx: number, clIdx: number, amt: number) {
     const importoSede = percToAmount(sedi[sedeIdx].percentuale, importoPerPeriodo)
-    const amt = parseFloat(rawAmount) || 0
     const perc = amountToPerc(amt, importoSede)
     setSedi(prev => prev.map((s, i) => {
       if (i !== sedeIdx) return s
@@ -157,7 +200,6 @@ export function CreatePlanModal({
 
   // ── Validazione ────────────────────────────────────────────────────────────
 
-  // In modalità € la validazione sul 100% è permissiva (il residuo viene assegnato auto)
   const totaleSedi = sedi.reduce((s, x) => s + x.percentuale, 0)
   const sediValide = splitMode === 'amount'
     ? sedi.length === 0 || totaleSedi > 0
@@ -183,13 +225,11 @@ export function CreatePlanModal({
 
     let sediFinali = sedi
 
-    // In modalità €: se c'è residuo, aggiungilo alla prima sede
     if (splitMode === 'amount' && sedi.length > 0 && residuoSedi !== 0) {
       const percResiduo = amountToPerc(residuoSedi, importoPerPeriodo)
       sediFinali = sedi.map((s, i) =>
         i === 0 ? { ...s, percentuale: round2(s.percentuale + percResiduo) } : s
       )
-      // Per i clienti della prima sede: stessa logica
       if (sediFinali[0].clienti.length > 0) {
         const totCl = sediFinali[0].clienti.reduce((s, c) => s + c.percentuale, 0)
         const residuoClPerc = 100 - totCl
@@ -206,7 +246,6 @@ export function CreatePlanModal({
       }
     }
 
-    // Stessa logica residuo clienti per modalità %
     if (splitMode === 'percent') {
       sediFinali = sedi.map(s => {
         if (s.clienti.length === 0) return s
@@ -311,10 +350,16 @@ export function CreatePlanModal({
             <div>
               <label className="block text-xs font-medium text-[#64748B] mb-1">Importo da splittare (€)</label>
               <input
-                type="number" min="0" step="0.01"
+                type="text"
+                inputMode="decimal"
                 className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm"
+                placeholder="0"
                 value={importo}
                 onChange={e => setImporto(e.target.value)}
+                onBlur={() => {
+                  const n = parseAmt(importo)
+                  if (n > 0) setImporto(fmtAmt(n))
+                }}
               />
             </div>
             <div>
@@ -414,7 +459,7 @@ export function CreatePlanModal({
                       <select
                         className="flex-1 border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
                         value={sede.sede}
-                        onChange={e => updateSedePerc(sIdx, 'sede', e.target.value)}
+                        onChange={e => updateSedeField(sIdx, 'sede', e.target.value)}
                       >
                         {sedeOptions.map(s => (
                           <option key={s} value={s}
@@ -430,19 +475,17 @@ export function CreatePlanModal({
                             type="number" min="0" max="100"
                             className="w-16 border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm text-center"
                             value={sede.percentuale}
-                            onChange={e => updateSedePerc(sIdx, 'percentuale', Math.min(100, parseInt(e.target.value) || 0))}
+                            onChange={e => updateSedeField(sIdx, 'percentuale', Math.min(100, parseInt(e.target.value) || 0))}
                           />
                           <span className="text-xs text-[#64748B]">%</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-[#64748B]">€</span>
-                          <input
-                            type="number" min="0" step="0.01"
+                          <AmountField
+                            value={importoSede}
+                            onCommit={amt => commitSedeAmount(sIdx, amt)}
                             className="w-24 border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm text-right"
-                            value={importoSede || ''}
-                            onChange={e => updateSedeAmount(sIdx, e.target.value)}
-                            placeholder="0,00"
                           />
                         </div>
                       )}
@@ -480,7 +523,7 @@ export function CreatePlanModal({
                             <select
                               className="flex-1 border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs bg-white"
                               value={cl.cliente}
-                              onChange={e => updateClientePerc(sIdx, clIdx, 'cliente', e.target.value)}
+                              onChange={e => updateClienteField(sIdx, clIdx, 'cliente', e.target.value)}
                             >
                               {clienteOptions.map(c => (
                                 <option key={c} value={c}
@@ -495,19 +538,17 @@ export function CreatePlanModal({
                                   type="number" min="0" max="100"
                                   className="w-14 border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs text-center"
                                   value={cl.percentuale}
-                                  onChange={e => updateClientePerc(sIdx, clIdx, 'percentuale', Math.min(100, parseInt(e.target.value) || 0))}
+                                  onChange={e => updateClienteField(sIdx, clIdx, 'percentuale', Math.min(100, parseInt(e.target.value) || 0))}
                                 />
                                 <span className="text-xs text-[#64748B]">%</span>
                               </>
                             ) : (
                               <>
                                 <span className="text-xs text-[#64748B]">€</span>
-                                <input
-                                  type="number" min="0" step="0.01"
+                                <AmountField
+                                  value={importoCl}
+                                  onCommit={amt => commitClienteAmount(sIdx, clIdx, amt)}
                                   className="w-20 border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs text-right"
-                                  value={importoCl || ''}
-                                  onChange={e => updateClienteAmount(sIdx, clIdx, e.target.value)}
-                                  placeholder="0,00"
                                 />
                               </>
                             )}
@@ -604,6 +645,39 @@ export function CreatePlanModal({
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Parsa un importo accettando sia punto che virgola come separatore decimale */
+function parseAmt(raw: string): number {
+  if (!raw) return 0
+  // Rimuove spazi e gestisce il formato europeo (1.234,56) e anglosassone (1,234.56)
+  const cleaned = raw.trim()
+  // Se c'è sia punto che virgola, il separatore migliaia precede il decimale
+  if (cleaned.includes('.') && cleaned.includes(',')) {
+    // Determina quale è il separatore decimale (l'ultimo dei due)
+    const lastDot = cleaned.lastIndexOf('.')
+    const lastComma = cleaned.lastIndexOf(',')
+    if (lastComma > lastDot) {
+      // formato europeo: 1.234,56
+      return parseFloat(cleaned.replace(/\./g, '').replace(',', '.')) || 0
+    } else {
+      // formato anglosassone: 1,234.56
+      return parseFloat(cleaned.replace(/,/g, '')) || 0
+    }
+  }
+  // Solo virgola → separatore decimale europeo
+  if (cleaned.includes(',') && !cleaned.includes('.')) {
+    return parseFloat(cleaned.replace(',', '.')) || 0
+  }
+  return parseFloat(cleaned) || 0
+}
+
+/** Formatta un numero per la visualizzazione nell'input (no migliaia, max 2 decimali) */
+function fmtAmt(n: number): string {
+  if (n === 0) return ''
+  // Usa punto come separatore decimale nell'input (HTML standard)
+  const r = round2(n)
+  return String(r)
+}
 
 function round2(n: number) { return Math.round(n * 100) / 100 }
 
