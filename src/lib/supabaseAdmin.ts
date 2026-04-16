@@ -8,5 +8,6 @@ export const supabaseSignup = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
+    storageKey: 'sb-signup-client',
   },
 })
