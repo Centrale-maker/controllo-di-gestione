@@ -4,6 +4,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import RimborsoPill from './RimborsoPill'
 import type { Purchase } from '@/types'
+import type { PlanBadge } from '@/hooks/usePlanBadges'
 
 interface Props {
   purchases:          Purchase[]
@@ -12,6 +13,7 @@ interface Props {
   onEditRow:          (p: Purchase) => void
   onDeleteRow:        (p: Purchase) => void
   highlightUploadId:  string | null
+  planBadges?:        Record<string, PlanBadge>
 }
 
 type SortKey = 'data' | 'fornitore' | 'categoria' | 'centro_costo' | 'imponibile' | 'iva'
@@ -36,7 +38,7 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
+export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId, planBadges }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
   const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
@@ -133,11 +135,18 @@ export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange
                   />
                 </td>
                 <td className="px-4 py-2.5">
-                  <RimborsoPill
-                    value={p.rimborso ?? null}
-                    saving={savingRimborso.has(p.id)}
-                    onChange={v => handleRimborso(p.id, v)}
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <RimborsoPill
+                      value={p.rimborso ?? null}
+                      saving={savingRimborso.has(p.id)}
+                      onChange={v => handleRimborso(p.id, v)}
+                    />
+                    {planBadges?.[p.id] && (
+                      <span className="text-xs bg-[#EFF6FF] text-[#1E3A5F] border border-[#BFDBFE] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">
+                        {planBadges[p.id].rimborsate}/{planBadges[p.id].totali}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-2 py-2.5">
                   <div className="flex items-center gap-0.5">

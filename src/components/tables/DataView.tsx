@@ -8,6 +8,7 @@ import RowEditModal from './RowEditModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import type { RowPatch } from './RowEditModal'
 import type { Purchase } from '@/types'
+import type { PlanBadge } from '@/hooks/usePlanBadges'
 
 interface Props {
   purchases:          Purchase[]
@@ -19,9 +20,10 @@ interface Props {
   onRowUpdate:        (id: string, patch: RowPatch) => Promise<void>
   onDeleteRow:        (id: string) => Promise<void>
   highlightUploadId:  string | null
+  planBadges?:        Record<string, PlanBadge>
 }
 
-export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRimborsoChange, onRowUpdate, onDeleteRow, highlightUploadId }: Props) {
+export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRimborsoChange, onRowUpdate, onDeleteRow, highlightUploadId, planBadges }: Props) {
   const isMobile = useIsMobile()
   const [editingRow, setEditingRow] = useState<Purchase | null>(null)
   const [deletingRow, setDeletingRow] = useState<Purchase | null>(null)
@@ -52,6 +54,7 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
             onEditRow={setEditingRow}
             onDeleteRow={setDeletingRow}
             highlightUploadId={highlightUploadId}
+            planBadges={planBadges}
           />
         : <DataTable
             purchases={purchases}
@@ -60,6 +63,7 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
             onEditRow={setEditingRow}
             onDeleteRow={setDeletingRow}
             highlightUploadId={highlightUploadId}
+            planBadges={planBadges}
           />
       }
       <RowEditModal

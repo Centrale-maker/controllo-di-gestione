@@ -5,6 +5,7 @@ import { usePurchases } from '@/hooks/usePurchases'
 import { useFilterOptions } from '@/hooks/useFilterOptions'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useLastUpload } from '@/hooks/useLastUpload'
+import { usePlanBadges } from '@/hooks/usePlanBadges'
 import { formatDate } from '@/lib/utils'
 import KPIStrip from '@/components/kpi/KPIStrip'
 import DataView from '@/components/tables/DataView'
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const { purchases, loading, error, updateRinnovi, updateRimborso, updateRow, deleteRow } = usePurchases(filters)
   const options = useFilterOptions()
   const { lastUpload, acknowledge } = useLastUpload()
+  const planBadges = usePlanBadges(purchases.map(p => p.id))
 
   const filterProps = { filters, options, activeCount, setFilter, resetFilters }
 
@@ -119,6 +121,7 @@ export default function Dashboard() {
         onRowUpdate={updateRow}
         onDeleteRow={deleteRow}
         highlightUploadId={lastUpload?.id ?? null}
+        planBadges={planBadges}
       />
     </div>
   )

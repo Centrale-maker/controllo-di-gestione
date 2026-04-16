@@ -4,6 +4,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import RimborsoPill from './RimborsoPill'
 import type { Purchase } from '@/types'
+import type { PlanBadge } from '@/hooks/usePlanBadges'
 
 interface Props {
   purchases:          Purchase[]
@@ -12,12 +13,13 @@ interface Props {
   onEditRow:          (p: Purchase) => void
   onDeleteRow:        (p: Purchase) => void
   highlightUploadId:  string | null
+  planBadges?:        Record<string, PlanBadge>
 }
 
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId }: Props) {
+export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId, planBadges }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
   const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
   const [savingRimborso, setSavingRimborso] = useState<Set<string>>(new Set())
@@ -100,6 +102,11 @@ export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange
               saving={savingRimborso.has(p.id)}
               onChange={v => handleRimborso(p.id, v)}
             />
+            {planBadges?.[p.id] && (
+              <span className="text-xs bg-[#EFF6FF] text-[#1E3A5F] border border-[#BFDBFE] px-1.5 py-0.5 rounded-full font-medium">
+                {planBadges[p.id].rimborsate}/{planBadges[p.id].totali} quote
+              </span>
+            )}
           </div>
         </div>
       ))}

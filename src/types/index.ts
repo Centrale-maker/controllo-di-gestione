@@ -126,6 +126,62 @@ export interface FilterState {
   searchText: string
 }
 
+// ─── ExpensePlan ─────────────────────────────────────────────────────────────
+
+export interface ExpensePlan {
+  id: string
+  company_id: string
+  purchase_id: string
+  importo_totale: number
+  n_periodi: number
+  data_inizio: string   // ISO date — primo giorno del primo mese
+  note: string | null
+  created_at: string
+  // join opzionale
+  purchase?: Purchase
+}
+
+// ─── ExpenseQuota ─────────────────────────────────────────────────────────────
+
+export type QuotaStato = 'da_rimborsare' | 'rimborsata'
+
+export interface ExpenseQuota {
+  id: string
+  company_id: string
+  plan_id: string
+  purchase_id: string
+  periodo: string       // ISO date — sempre il 1° del mese
+  sede: string | null
+  cliente: string | null
+  importo: number
+  quota_index: number   // 1-based
+  quota_totale: number
+  stato: QuotaStato
+  data_rimborso: string | null
+  note: string | null
+  created_at: string
+  updated_at: string
+  // join opzionale
+  purchase?: Purchase
+  plan?: ExpensePlan
+}
+
+// Riga "diretta" sintetica usata nella pagina Rimborsi per le purchases senza piano
+export interface DirectReimbursement {
+  purchase: Purchase
+  tipo: 'direct'
+}
+
+export interface PlanReimbursement {
+  plan: ExpensePlan
+  quotas: ExpenseQuota[]
+  tipo: 'plan'
+}
+
+export type ReimbursementRow = DirectReimbursement | PlanReimbursement
+
+// ─── Filters ─────────────────────────────────────────────────────────────────
+
 export const defaultFilterState: FilterState = {
   dateRange: { from: null, to: null },
   scadenzaRange: { from: null, to: null },
