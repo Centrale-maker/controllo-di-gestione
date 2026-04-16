@@ -1,28 +1,57 @@
 import { useState } from 'react'
-import { X, Plus, Trash2, AlertCircle } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { useExpensePlans, type SedeCliente } from '@/hooks/useExpensePlans'
-import type { Purchase } from '@/types'
+import type { ExpenseQuota, Purchase } from '@/types'
+
+// ─── Tipi ─────────────────────────────────────────────────────────────────────
+
+export interface EditModeProps {
+  planId: string
+  nRimborsate: number            // quote già rimborsate (warning)
+  firstPeriodQuotas: ExpenseQuota[]  // prime quote per ricostruire sedi/clienti
+  initialPurchaseId: string
+  initialImporto: number
+  initialNPeriodi: number
+  initialDataInizio: string
+  initialNote: string | null
+}
 
 interface Props {
-  purchases: Purchase[]          // lista spese selezionabili
-  sedeOptions: string[]          // sedi disponibili (da cc_sede)
-  clienteOptions: string[]       // clienti disponibili (da cc_cliente)
+  purchases: Purchase[]
+  sedeOptions: string[]
+  clienteOptions: string[]
   onCreated: () => void
   onClose: () => void
+  editMode?: EditModeProps        // se presente = modalità modifica
 }
 
 // ─── CreatePlanModal ──────────────────────────────────────────────────────────
 
-export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCreated, onClose }: Props) {
-  const { createPlanWithQuotas, loading, error } = useExpensePlans()
+export function CreatePlanModal({
+  purchases, sedeOptions, clienteOptions, onCreated, onClose, editMode,
+}: Props) {
+  const { createPlanWithQuotas, editPlanWithQuotas, loading, error } = useExpensePlans()
+  const isEdit = !!editMode
 
-  const [purchaseId, setPurchaseId] = useState<string>(purchases[0]?.id ?? '')
-  const [importo, setImporto] = useState<string>('')
-  const [nPeriodi, setNPeriodi] = useState<number>(1)
-  const [dataInizio, setDataInizio] = useState<string>(firstOfCurrentMonth())
-  const [note, setNote] = useState<string>('')
-  const [sedi, setSedi] = useState<SedeCliente[]>([])
+  // Stato form — in edit mode pre-popola dai dati esistenti
+  const [purchaseId, setPurchaseId] = useState<string>(
+    editMode?.initialPurchaseId ?? purchases[0]?.id ?? ''
+  )
+  const [importo, setImporto] = useState<string>(
+    editMode ? String(editMode.initialImporto) : ''
+  )
+  const [nPeriodi, setNPeriodi] = useState<number>(
+    editMode?.initialNPeriodi ?? 1
+  )
+  const [dataInizio, setDataInizio] = useState<string>(
+    editMode?.initialDataInizio ?? firstOfCurrentMonth()
+  )
+  const [note, setNote] = useState<string>(editMode?.initialNote ?? '')
+  const [sedi, setSedi] = useState<SedeCliente[]>(
+    editMode ? quotasToSedi(editMode.firstPeriodQuotas, editMode.initialImporto / editMode.initialNPeriodi) : []
+  )
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false)
 
   // Quando cambia la purchase, precompila l'importo con l'imponibile
   function onPurchaseChange(id: string) {
@@ -37,7 +66,6 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
     const sedeLibere = sedeOptions.filter(s => !sedi.find(x => x.sede === s))
     const nuovaSede = sedeLibere[0] ?? ''
     const nSedi = sedi.length + 1
-    // Redistribuisce percentuali uniformemente
     const percBase = Math.floor(100 / nSedi)
     const resto = 100 - percBase * nSedi
     setSedi(prev => [
@@ -47,8 +75,7 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
   }
 
   function removeSede(idx: number) {
-    const nuove = sedi.filter((_, i) => i !== idx)
-    setSedi(ridistribuisci(nuove))
+    setSedi(ridistribuisci(sedi.filter((_, i) => i !== idx)))
   }
 
   function updateSede(idx: number, field: keyof Omit<SedeCliente, 'clienti'>, value: string | number) {
@@ -77,8 +104,7 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
   function removeCliente(sedeIdx: number, clIdx: number) {
     setSedi(prev => prev.map((s, i) => {
       if (i !== sedeIdx) return s
-      const nuovi = s.clienti.filter((_, ci) => ci !== clIdx)
-      return { ...s, clienti: ridistribuisciCl(nuovi) }
+      return { ...s, clienti: ridistribuisciCl(s.clienti.filter((_, ci) => ci !== clIdx)) }
     }))
   }
 
@@ -89,47 +115,48 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
     }))
   }
 
-  // ── Validazione ─────────────────────────────────────────────────────────────
+  // ── Validazione ────────────────────────────────────────────────────────────
 
   const totaleSedi = sedi.reduce((s, x) => s + x.percentuale, 0)
   const sediValide = sedi.length === 0 || totaleSedi === 100
-  const clientiValidi = sedi.every(s => {
-    if (s.clienti.length === 0) return true
-    return s.clienti.reduce((sum, c) => sum + c.percentuale, 0) === 100
-  })
+  const clientiValidi = sedi.every(s =>
+    s.clienti.length === 0 || s.clienti.reduce((sum, c) => sum + c.percentuale, 0) === 100
+  )
   const importoNum = parseFloat(importo.replace(',', '.'))
+  const needsConfirm = isEdit && (editMode?.nRimborsate ?? 0) > 0 && !confirmOverwrite
   const canSubmit =
-    purchaseId &&
-    !isNaN(importoNum) && importoNum > 0 &&
-    nPeriodi >= 1 &&
-    dataInizio &&
-    sediValide &&
-    clientiValidi &&
-    !loading
-
-  // ── Preview quote ────────────────────────────────────────────────────────────
+    purchaseId && !isNaN(importoNum) && importoNum > 0 &&
+    nPeriodi >= 1 && dataInizio && sediValide && clientiValidi &&
+    !loading && !needsConfirm
 
   const preview = buildPreview(importoNum || 0, nPeriodi, sedi)
 
-  // ── Submit ───────────────────────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────────
 
   async function handleSubmit() {
     if (!canSubmit) return
-    const result = await createPlanWithQuotas({
+    const input = {
       purchase_id: purchaseId,
       importo_totale: importoNum,
       n_periodi: nPeriodi,
       data_inizio: dataInizio,
       note: note.trim() || undefined,
       sedi,
-    })
-    if (result) {
-      onCreated()
-      onClose()
     }
+
+    let ok = false
+    if (isEdit && editMode) {
+      ok = await editPlanWithQuotas(editMode.planId, input)
+    } else {
+      const result = await createPlanWithQuotas(input)
+      ok = !!result
+    }
+
+    if (ok) { onCreated(); onClose() }
   }
 
   const selectedPurchase = purchases.find(p => p.id === purchaseId)
+  const nRimb = editMode?.nRimborsate ?? 0
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 px-0 md:px-4">
@@ -137,22 +164,52 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#E2E8F0]">
-          <h2 className="text-base font-semibold text-[#1A202C]">Crea Piano di Rimborso</h2>
+          <h2 className="text-base font-semibold text-[#1A202C]">
+            {isEdit ? 'Modifica Piano di Rimborso' : 'Crea Piano di Rimborso'}
+          </h2>
           <button onClick={onClose} className="p-1.5 hover:bg-[#F1F5F9] rounded-lg">
             <X size={18} className="text-[#64748B]" />
           </button>
         </div>
 
-        {/* Body scrollabile */}
+        {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+
+          {/* Warning quote già rimborsate */}
+          {isEdit && nRimb > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={15} className="text-amber-600 shrink-0" />
+                <p className="text-xs font-semibold text-amber-800">
+                  Questo piano ha {nRimb} {nRimb === 1 ? 'quota già rimborsata' : 'quote già rimborsate'}
+                </p>
+              </div>
+              <p className="text-xs text-amber-700">
+                Le quote rimborsate rimarranno invariate. Verranno rigenerate solo quelle ancora da rimborsare.
+              </p>
+              {!confirmOverwrite && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmOverwrite(true)}
+                  className="text-xs font-semibold text-amber-800 underline"
+                >
+                  Ho capito, procedi con la modifica
+                </button>
+              )}
+              {confirmOverwrite && (
+                <p className="text-xs font-semibold text-amber-800">✓ Confermato</p>
+              )}
+            </div>
+          )}
 
           {/* Selezione spesa */}
           <div>
             <label className="block text-xs font-medium text-[#64748B] mb-1">Spesa</label>
             <select
-              className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm text-[#1A202C] bg-white"
+              className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm text-[#1A202C] bg-white disabled:bg-[#F8FAFC] disabled:text-[#64748B]"
               value={purchaseId}
               onChange={e => onPurchaseChange(e.target.value)}
+              disabled={isEdit}   // in edit non si cambia la spesa
             >
               {purchases.map(p => (
                 <option key={p.id} value={p.id}>
@@ -172,9 +229,7 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
             <div>
               <label className="block text-xs font-medium text-[#64748B] mb-1">Importo da splittare (€)</label>
               <input
-                type="number"
-                min="0"
-                step="0.01"
+                type="number" min="0" step="0.01"
                 className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm"
                 value={importo}
                 onChange={e => setImporto(e.target.value)}
@@ -183,9 +238,7 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
             <div>
               <label className="block text-xs font-medium text-[#64748B] mb-1">N° periodi (mesi)</label>
               <input
-                type="number"
-                min="1"
-                max="60"
+                type="number" min="1" max="60"
                 className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm"
                 value={nPeriodi}
                 onChange={e => setNPeriodi(Math.max(1, parseInt(e.target.value) || 1))}
@@ -207,8 +260,7 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-[#64748B]">Suddivisione per sede (opzionale)</span>
               <button
-                type="button"
-                onClick={addSede}
+                type="button" onClick={addSede}
                 disabled={sedi.length >= sedeOptions.length}
                 className="text-xs text-[#3B82F6] flex items-center gap-1 disabled:opacity-40"
               >
@@ -224,11 +276,9 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
               {sedi.map((sede, sIdx) => {
                 const importoSede = !isNaN(importoNum) ? round2(importoNum / nPeriodi * (sede.percentuale / 100)) : 0
                 const totCl = sede.clienti.reduce((s, c) => s + c.percentuale, 0)
-
                 return (
                   <div key={sIdx} className="border border-[#E2E8F0] rounded-xl p-3 bg-[#F8FAFC]">
                     <div className="flex items-center gap-2 mb-2">
-                      {/* Sede select */}
                       <select
                         className="flex-1 border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
                         value={sede.sede}
@@ -240,7 +290,6 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
                           >{s}</option>
                         ))}
                       </select>
-                      {/* Percentuale */}
                       <div className="flex items-center gap-1">
                         <input
                           type="number" min="0" max="100"
@@ -259,7 +308,6 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
                       </button>
                     </div>
 
-                    {/* Clienti */}
                     <div className="pl-3 space-y-1.5">
                       {sede.clienti.map((cl, clIdx) => {
                         const importoCl = round2(importoSede * (cl.percentuale / 100))
@@ -293,13 +341,11 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
                           </div>
                         )
                       })}
-
                       <button type="button" onClick={() => addCliente(sIdx)}
                         disabled={sede.clienti.length >= clienteOptions.length}
                         className="text-xs text-[#3B82F6] flex items-center gap-1 disabled:opacity-40 mt-1">
                         <Plus size={12} /> Aggiungi cliente
                       </button>
-
                       {sede.clienti.length > 0 && totCl !== 100 && (
                         <p className="text-xs text-[#EF4444]">Totale clienti: {totCl}% (deve essere 100%)</p>
                       )}
@@ -359,19 +405,21 @@ export function CreatePlanModal({ purchases, sedeOptions, clienteOptions, onCrea
         {/* Footer */}
         <div className="flex gap-3 px-5 py-4 border-t border-[#E2E8F0]">
           <button
-            type="button"
-            onClick={onClose}
+            type="button" onClick={onClose}
             className="flex-1 py-2.5 border border-[#E2E8F0] rounded-xl text-sm text-[#64748B] hover:bg-[#F8FAFC]"
           >
             Annulla
           </button>
           <button
-            type="button"
-            onClick={handleSubmit}
+            type="button" onClick={handleSubmit}
             disabled={!canSubmit}
             className="flex-1 py-2.5 bg-[#1E3A5F] text-white rounded-xl text-sm font-medium disabled:opacity-40"
           >
-            {loading ? 'Creazione…' : `Crea Piano (${preview.length} quote)`}
+            {loading
+              ? (isEdit ? 'Salvataggio…' : 'Creazione…')
+              : isEdit
+                ? 'Salva Modifiche'
+                : `Crea Piano (${preview.length} quote)`}
           </button>
         </div>
       </div>
@@ -402,14 +450,41 @@ function ridistribuisciCl(clienti: { cliente: string; percentuale: number }[]) {
   return clienti.map((c, i) => ({ ...c, percentuale: percBase + (i === 0 ? resto : 0) }))
 }
 
+// Ricostruisce SedeCliente[] dalle quote del primo periodo
+function quotasToSedi(firstPeriodQuotas: ExpenseQuota[], importoPerPeriodo: number): SedeCliente[] {
+  if (firstPeriodQuotas.length === 0) return []
+  // Se tutte hanno sede null → nessuna suddivisione
+  if (firstPeriodQuotas.every(q => !q.sede)) return []
+
+  const sedeMap = new Map<string, { totImporto: number; clienti: { cliente: string; importo: number }[] }>()
+  for (const q of firstPeriodQuotas) {
+    const sedeName = q.sede ?? '__nessuna__'
+    const existing = sedeMap.get(sedeName) ?? { totImporto: 0, clienti: [] }
+    existing.totImporto += q.importo
+    if (q.cliente) existing.clienti.push({ cliente: q.cliente, importo: q.importo })
+    sedeMap.set(sedeName, existing)
+  }
+
+  return [...sedeMap.entries()].map(([sedeName, data]) => {
+    const percSede = importoPerPeriodo > 0 ? Math.round(data.totImporto / importoPerPeriodo * 100) : 50
+    const clienti = data.clienti.map(cl => ({
+      cliente: cl.cliente,
+      percentuale: data.totImporto > 0 ? Math.round(cl.importo / data.totImporto * 100) : 50,
+    }))
+    return {
+      sede: sedeName === '__nessuna__' ? '' : sedeName,
+      percentuale: percSede,
+      clienti,
+    }
+  })
+}
+
 function buildPreview(importoTotale: number, nPeriodi: number, sedi: SedeCliente[]): { label: string; importo: number }[] {
   const perPeriodo = round2(importoTotale / nPeriodi)
   const rows: { label: string; importo: number }[] = []
 
   if (sedi.length === 0) {
-    for (let i = 0; i < nPeriodi; i++) {
-      rows.push({ label: `Mese ${i + 1}`, importo: perPeriodo })
-    }
+    for (let i = 0; i < nPeriodi; i++) rows.push({ label: `Mese ${i + 1}`, importo: perPeriodo })
     return rows
   }
 

@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Trash2, Pencil } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { QuotaStatusPill } from './QuotaStatusPill'
 import { useExpensePlans } from '@/hooks/useExpensePlans'
 import type { ExpenseQuota, Purchase, QuotaStato } from '@/types'
+import type { EditModeProps } from './CreatePlanModal'
 
 // ─── Tipi ─────────────────────────────────────────────────────────────────────
 
@@ -20,11 +21,12 @@ interface Props {
   onToggleQuota: (id: string, nuovoStato: QuotaStato) => Promise<boolean>
   onToggleDirect: (purchaseId: string, stato: 'rimborsata' | 'non rimborsata' | null) => Promise<boolean>
   onPlanDeleted: () => void
+  onEditPlan: (editProps: EditModeProps) => void   // apre il modal in edit mode
 }
 
 // ─── QuotaList ────────────────────────────────────────────────────────────────
 
-export function QuotaList({ groups, directPurchases, onToggleQuota, onToggleDirect, onPlanDeleted }: Props) {
+export function QuotaList({ groups, directPurchases, onToggleQuota, onToggleDirect, onPlanDeleted, onEditPlan }: Props) {
   const hasPlan = groups.length > 0
   const hasDirect = directPurchases.length > 0
 
@@ -39,17 +41,16 @@ export function QuotaList({ groups, directPurchases, onToggleQuota, onToggleDire
 
   return (
     <div className="space-y-3">
-      {/* Piani di rimborso */}
       {groups.map(group => (
         <PlanGroup
           key={group.planId ?? group.purchase.id}
           group={group}
           onToggleQuota={onToggleQuota}
           onPlanDeleted={onPlanDeleted}
+          onEditPlan={onEditPlan}
         />
       ))}
 
-      {/* Rimborsi diretti (spese senza piano) */}
       {hasDirect && (
         <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
           <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
@@ -70,10 +71,11 @@ export function QuotaList({ groups, directPurchases, onToggleQuota, onToggleDire
 
 // ─── PlanGroup ────────────────────────────────────────────────────────────────
 
-function PlanGroup({ group, onToggleQuota, onPlanDeleted }: {
+function PlanGroup({ group, onToggleQuota, onPlanDeleted, onEditPlan }: {
   group: QuotaGroup
   onToggleQuota: (id: string, stato: QuotaStato) => Promise<boolean>
   onPlanDeleted: () => void
+  onEditPlan: (editProps: EditModeProps) => void
 }) {
   const [expanded, setExpanded] = useState(true)
   const [deleting, setDeleting] = useState(false)
@@ -83,8 +85,6 @@ function PlanGroup({ group, onToggleQuota, onPlanDeleted }: {
   const totale = group.quotas.length
   const totImporto = group.quotas.reduce((s, q) => s + q.importo, 0)
   const rimborsataImporto = group.quotas.filter(q => q.stato === 'rimborsata').reduce((s, q) => s + q.importo, 0)
-
-  // Badge "X di N" basato sull'indice quota (quanti periodi completati)
   const periodoMax = group.quotas[0]?.quota_totale ?? 1
   const periodiRimborsati = [...new Set(
     group.quotas.filter(q => q.stato === 'rimborsata').map(q => q.quota_index)
@@ -99,14 +99,38 @@ function PlanGroup({ group, onToggleQuota, onPlanDeleted }: {
     setDeleting(false)
   }
 
+  function handleEdit(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!group.planId) return
+    // Prende le quote del primo periodo per ricostruire sedi/clienti
+    const minIndex = Math.min(...group.quotas.map(q => q.quota_index))
+    const firstPeriodQuotas = group.quotas.filter(q => q.quota_index === minIndex)
+    const importoTotale = totImporto / (totale / (firstPeriodQuotas.length || 1))
+
+    onEditPlan({
+      planId: group.planId,
+      nRimborsate: rimborsate,
+      firstPeriodQuotas,
+      initialPurchaseId: group.purchase.id,
+      initialImporto: importoTotale * periodoMax,
+      initialNPeriodi: periodoMax,
+      initialDataInizio: group.quotas.reduce(
+        (min, q) => q.periodo < min ? q.periodo : min,
+        group.quotas[0]?.periodo ?? ''
+      ),
+      initialNote: null,
+    })
+  }
+
   return (
     <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
-      {/* Header piano */}
       <div
         className="flex items-center gap-2 px-4 py-3 bg-white cursor-pointer select-none hover:bg-[#F8FAFC]"
         onClick={() => setExpanded(e => !e)}
       >
-        {expanded ? <ChevronDown size={15} className="text-[#64748B] shrink-0" /> : <ChevronRight size={15} className="text-[#64748B] shrink-0" />}
+        {expanded
+          ? <ChevronDown size={15} className="text-[#64748B] shrink-0" />
+          : <ChevronRight size={15} className="text-[#64748B] shrink-0" />}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -118,7 +142,7 @@ function PlanGroup({ group, onToggleQuota, onPlanDeleted }: {
                 {periodiRimborsati} di {periodoMax}
               </span>
             )}
-            {rimborsate === totale && (
+            {rimborsate === totale && totale > 0 && (
               <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
                 ✓ Completato
               </span>
@@ -131,22 +155,31 @@ function PlanGroup({ group, onToggleQuota, onPlanDeleted }: {
 
         <div className="text-right shrink-0 ml-2">
           <p className="text-sm font-semibold text-[#1A202C]">{formatCurrency(totImporto)}</p>
-          <p className="text-xs text-[#64748B]">
-            {formatCurrency(rimborsataImporto)} rimborsati
-          </p>
+          <p className="text-xs text-[#64748B]">{formatCurrency(rimborsataImporto)} rimborsati</p>
         </div>
 
+        {/* Tasto modifica */}
+        <button
+          type="button"
+          onClick={handleEdit}
+          className="ml-1 p-1.5 text-[#64748B] hover:text-[#1E3A5F] hover:bg-[#EFF6FF] rounded-lg"
+          title="Modifica piano"
+        >
+          <Pencil size={14} />
+        </button>
+
+        {/* Tasto elimina */}
         <button
           type="button"
           onClick={e => { e.stopPropagation(); handleDelete() }}
           disabled={deleting}
-          className="ml-2 p-1.5 text-[#EF4444] hover:bg-red-50 rounded-lg disabled:opacity-40"
+          className="p-1.5 text-[#EF4444] hover:bg-red-50 rounded-lg disabled:opacity-40"
+          title="Elimina piano"
         >
           <Trash2 size={14} />
         </button>
       </div>
 
-      {/* Quote del piano */}
       {expanded && (
         <div className="divide-y divide-[#F1F5F9] border-t border-[#F1F5F9]">
           {group.quotas.map(quota => (
@@ -174,7 +207,6 @@ function QuotaRow({ quota, onToggle }: {
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-[#FAFAFA]">
-      {/* Dettaglio sede/cliente */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           {quota.sede && (

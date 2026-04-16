@@ -77,6 +77,75 @@ export function useExpensePlans() {
     []
   )
 
+  // ── Modifica piano: aggiorna metadati + rigenera quote non rimborsate ────
+  const editPlanWithQuotas = useCallback(
+    async (planId: string, input: CreatePlanInput): Promise<boolean> => {
+      setLoading(true)
+      setError(null)
+      try {
+        const { data: profile, error: profErr } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('id', (await supabase.auth.getUser()).data.user?.id ?? '')
+          .single()
+        if (profErr || !profile?.company_id) throw new Error('Impossibile recuperare company_id')
+        const companyId = profile.company_id as string
+
+        // 1. Elimina SOLO le quote non rimborsate (le rimborsate restano intatte)
+        const { error: delErr } = await supabase
+          .from('expense_quotas')
+          .delete()
+          .eq('plan_id', planId)
+          .eq('stato', 'da_rimborsare')
+        if (delErr) throw delErr
+
+        // 2. Aggiorna il piano
+        const { data: planData, error: planErr } = await supabase
+          .from('expense_plans')
+          .update({
+            purchase_id: input.purchase_id,
+            importo_totale: input.importo_totale,
+            n_periodi: input.n_periodi,
+            data_inizio: input.data_inizio,
+            note: input.note ?? null,
+          })
+          .eq('id', planId)
+          .select()
+          .single()
+        if (planErr) throw planErr
+        const plan = planData as ExpensePlan
+
+        // 3. Rigenera solo le quote da_rimborsare (salta i periodi già rimborsati)
+        const { data: rimborsate } = await supabase
+          .from('expense_quotas')
+          .select('quota_index')
+          .eq('plan_id', planId)
+          .eq('stato', 'rimborsata')
+        const periodiGiaRimborsati = new Set(
+          (rimborsate ?? []).map((r: { quota_index: number }) => r.quota_index)
+        )
+
+        const nuoveQuote = buildQuotas(plan, input, companyId)
+          .filter(q => !periodiGiaRimborsati.has(q.quota_index))
+
+        if (nuoveQuote.length > 0) {
+          const { error: insErr } = await supabase
+            .from('expense_quotas')
+            .insert(nuoveQuote)
+          if (insErr) throw insErr
+        }
+
+        return true
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Errore modifica piano')
+        return false
+      } finally {
+        setLoading(false)
+      }
+    },
+    []
+  )
+
   // ── Elimina piano (e tutte le sue quote via CASCADE) ─────────────────────
   const deletePlan = useCallback(async (planId: string): Promise<boolean> => {
     setLoading(true)
@@ -96,7 +165,7 @@ export function useExpensePlans() {
     }
   }, [])
 
-  return { loading, error, createPlanWithQuotas, deletePlan }
+  return { loading, error, createPlanWithQuotas, editPlanWithQuotas, deletePlan }
 }
 
 // ─── Generatore quote ─────────────────────────────────────────────────────────

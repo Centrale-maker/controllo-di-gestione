@@ -10,6 +10,7 @@ import { CreatePlanModal } from '@/components/rimborsi/CreatePlanModal'
 import { RimborsiExportDialog } from '@/components/rimborsi/RimborsiExportDialog'
 import { RimborsiCalendar } from '@/components/rimborsi/RimborsiCalendar'
 import type { ExpenseQuota } from '@/types'
+import type { EditModeProps } from '@/components/rimborsi/CreatePlanModal'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ export default function Rimborsi() {
   const [view, setView]         = useState<View>('lista')
   const [periodo, setPeriodo]   = useState<string>(toIsoMonth(new Date()))
   const [createOpen, setCreateOpen] = useState(false)
+  const [editProps, setEditProps]   = useState<EditModeProps | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
 
   const {
@@ -193,6 +195,7 @@ export default function Rimborsi() {
                 onToggleQuota={updateQuotaStato}
                 onToggleDirect={updateDirectRimborso}
                 onPlanDeleted={refresh}
+                onEditPlan={setEditProps}
               />
             )}
           </>
@@ -212,6 +215,17 @@ export default function Rimborsi() {
           clienteOptions={filterOptions.ccCliente}
           onCreated={refresh}
           onClose={() => setCreateOpen(false)}
+        />
+      )}
+
+      {editProps && (
+        <CreatePlanModal
+          purchases={allPurchases}
+          sedeOptions={filterOptions.ccSede}
+          clienteOptions={filterOptions.ccCliente}
+          onCreated={refresh}
+          onClose={() => setEditProps(null)}
+          editMode={editProps}
         />
       )}
       {exportOpen && (
