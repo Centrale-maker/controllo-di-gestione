@@ -13,6 +13,7 @@ export interface PlanBadge {
 
 export function usePlanBadges(purchaseIds: string[]) {
   const [badges, setBadges] = useState<Record<string, PlanBadge>>({})
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const key = purchaseIds.slice().sort().join(',')
 
@@ -45,7 +46,9 @@ export function usePlanBadges(purchaseIds: string[]) {
 
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [key, refreshKey])
 
-  return badges
+  function refresh() { setRefreshKey(k => k + 1) }
+
+  return { badges, refresh }
 }

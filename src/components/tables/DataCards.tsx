@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, ReceiptText } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import RimborsoPill from './RimborsoPill'
@@ -12,6 +12,7 @@ interface Props {
   onRimborsoChange:   (id: string, value: 'rimborsata' | 'non rimborsata' | null) => Promise<void>
   onEditRow:          (p: Purchase) => void
   onDeleteRow:        (p: Purchase) => void
+  onCreatePlan:       (p: Purchase) => void
   highlightUploadId:  string | null
   planBadges?:        Record<string, PlanBadge>
 }
@@ -19,7 +20,7 @@ interface Props {
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId, planBadges }: Props) {
+export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, onCreatePlan, highlightUploadId, planBadges }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
   const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
   const [savingRimborso, setSavingRimborso] = useState<Set<string>>(new Set())
@@ -64,6 +65,13 @@ export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange
               <p className="text-sm font-bold text-[#1A202C] tabular-nums">
                 {formatCurrency(Number(p.imponibile))}
               </p>
+              <button
+                onClick={() => onCreatePlan(p)}
+                className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#10B981] hover:bg-emerald-50 transition-colors"
+                title="Crea piano di rimborso"
+              >
+                <ReceiptText size={14} />
+              </button>
               <button
                 onClick={() => onEditRow(p)}
                 className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"

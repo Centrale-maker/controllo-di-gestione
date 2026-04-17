@@ -31,7 +31,7 @@ export default function Dashboard() {
   const { purchases, loading, error, updateRinnovi, updateRimborso, updateRow, deleteRow } = usePurchases(filters)
   const options = useFilterOptions()
   const { lastUpload, acknowledge } = useLastUpload()
-  const planBadges = usePlanBadges(purchases.map(p => p.id))
+  const { badges: planBadges, refresh: refreshPlanBadges } = usePlanBadges(purchases.map(p => p.id))
 
   const filterProps = { filters, options, activeCount, setFilter, resetFilters }
 
@@ -122,6 +122,7 @@ export default function Dashboard() {
         onDeleteRow={deleteRow}
         highlightUploadId={lastUpload?.id ?? null}
         planBadges={planBadges}
+        onPlanCreated={refreshPlanBadges}
       />
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react'
+import { ChevronUp, ChevronDown, Pencil, Trash2, ReceiptText } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import RimborsoPill from './RimborsoPill'
@@ -12,6 +12,7 @@ interface Props {
   onRimborsoChange:   (id: string, value: 'rimborsata' | 'non rimborsata' | null) => Promise<void>
   onEditRow:          (p: Purchase) => void
   onDeleteRow:        (p: Purchase) => void
+  onCreatePlan:       (p: Purchase) => void
   highlightUploadId:  string | null
   planBadges?:        Record<string, PlanBadge>
 }
@@ -38,7 +39,7 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, highlightUploadId, planBadges }: Props) {
+export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, onCreatePlan, highlightUploadId, planBadges }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
   const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
@@ -150,6 +151,13 @@ export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange
                 </td>
                 <td className="px-2 py-2.5">
                   <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={() => onCreatePlan(p)}
+                      className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#10B981] hover:bg-emerald-50 transition-colors"
+                      title="Crea piano di rimborso"
+                    >
+                      <ReceiptText size={14} />
+                    </button>
                     <button
                       onClick={() => onEditRow(p)}
                       className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"

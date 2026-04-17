@@ -6,6 +6,7 @@ import DataTable from './DataTable'
 import DataCards from './DataCards'
 import RowEditModal from './RowEditModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
+import { CreatePlanModal } from '@/components/rimborsi/CreatePlanModal'
 import type { RowPatch } from './RowEditModal'
 import type { Purchase } from '@/types'
 import type { PlanBadge } from '@/hooks/usePlanBadges'
@@ -21,12 +22,14 @@ interface Props {
   onDeleteRow:        (id: string) => Promise<void>
   highlightUploadId:  string | null
   planBadges?:        Record<string, PlanBadge>
+  onPlanCreated?:     () => void
 }
 
-export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRimborsoChange, onRowUpdate, onDeleteRow, highlightUploadId, planBadges }: Props) {
+export default function DataView({ purchases, loading, error, options, onRinnoviChange, onRimborsoChange, onRowUpdate, onDeleteRow, highlightUploadId, planBadges, onPlanCreated }: Props) {
   const isMobile = useIsMobile()
   const [editingRow, setEditingRow] = useState<Purchase | null>(null)
   const [deletingRow, setDeletingRow] = useState<Purchase | null>(null)
+  const [planningRow, setPlanningRow] = useState<Purchase | null>(null)
 
   if (loading) {
     return (
@@ -53,6 +56,7 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
             onRimborsoChange={onRimborsoChange}
             onEditRow={setEditingRow}
             onDeleteRow={setDeletingRow}
+            onCreatePlan={setPlanningRow}
             highlightUploadId={highlightUploadId}
             planBadges={planBadges}
           />
@@ -62,6 +66,7 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
             onRimborsoChange={onRimborsoChange}
             onEditRow={setEditingRow}
             onDeleteRow={setDeletingRow}
+            onCreatePlan={setPlanningRow}
             highlightUploadId={highlightUploadId}
             planBadges={planBadges}
           />
@@ -77,6 +82,15 @@ export default function DataView({ purchases, loading, error, options, onRinnovi
         onConfirm={onDeleteRow}
         onClose={() => setDeletingRow(null)}
       />
+      {planningRow && (
+        <CreatePlanModal
+          purchases={[planningRow]}
+          sedeOptions={options.ccSede}
+          clienteOptions={options.ccCliente}
+          onCreated={() => { setPlanningRow(null); onPlanCreated?.() }}
+          onClose={() => setPlanningRow(null)}
+        />
+      )}
     </>
   )
 }
