@@ -26,18 +26,26 @@ export interface FacetedOptions {
 
 type ScalarKey = keyof Omit<FacetRow, 'targhe'>
 
-// ─── Cascade chain ───────────────────────────────────────────────────────────
+// ─── Cascade ─────────────────────────────────────────────────────────────────
 
 export type CascadeKey = 'ccTipo' | 'ccSede' | 'ccCliente' | 'categoria' | 'fornitore' | 'paese'
 
-const CHAIN: Array<{ filter: CascadeKey; rowKey: ScalarKey }> = [
-  { filter: 'ccCliente', rowKey: 'cc_cliente' },
-  { filter: 'ccSede',    rowKey: 'cc_sede'    },
-  { filter: 'ccTipo',    rowKey: 'cc_tipo'    },
-  { filter: 'categoria', rowKey: 'categoria'  },
-  { filter: 'fornitore', rowKey: 'fornitore'  },
-  { filter: 'paese',     rowKey: 'paese'      },
-]
+const DIM_TO_ROW: Record<CascadeKey, ScalarKey> = {
+  ccCliente: 'cc_cliente',
+  ccSede:    'cc_sede',
+  ccTipo:    'cc_tipo',
+  categoria: 'categoria',
+  fornitore: 'fornitore',
+  paese:     'paese',
+}
+
+const DEFAULT_ORDER: CascadeKey[] = ['ccCliente', 'ccSede', 'ccTipo', 'categoria', 'fornitore', 'paese']
+
+function buildChain(ids: string[]): Array<{ filter: CascadeKey; rowKey: ScalarKey }> {
+  return ids
+    .filter((id): id is CascadeKey => id in DIM_TO_ROW)
+    .map(id => ({ filter: id as CascadeKey, rowKey: DIM_TO_ROW[id as CascadeKey] }))
+}
 
 // ─── Helper puri ─────────────────────────────────────────────────────────────
 
@@ -58,21 +66,26 @@ function applyFilter(rows: FacetRow[], key: ScalarKey, selected: string[]): Face
 
 /**
  * Calcola le modifiche da applicare ai filtri downstream quando cambia
- * un filtro upstream. Rimuove automaticamente le selezioni non più valide.
+ * un filtro upstream. La gerarchia è determinata da activeDimIds (ordine
+ * di aggiunta nella DragFilterBar); se omesso usa l'ordine di default.
  */
 export function cascadeReset(
   allRows: FacetRow[],
   changedKey: CascadeKey,
   newValue: string[],
   currentFilters: FilterState,
+  activeDimIds?: string[],
 ): Partial<FilterState> {
+  const chain = buildChain(activeDimIds ?? DEFAULT_ORDER)
   const patch: Partial<FilterState> = { [changedKey]: newValue }
-  const startIdx = CHAIN.findIndex(c => c.filter === changedKey)
+  const startIdx = chain.findIndex(c => c.filter === changedKey)
 
-  let filtered = applyFilter(allRows, CHAIN[startIdx].rowKey, newValue)
+  if (startIdx === -1) return patch
 
-  for (let i = startIdx + 1; i < CHAIN.length; i++) {
-    const { filter, rowKey } = CHAIN[i]
+  let filtered = applyFilter(allRows, chain[startIdx].rowKey, newValue)
+
+  for (let i = startIdx + 1; i < chain.length; i++) {
+    const { filter, rowKey } = chain[i]
     const valid = new Set(filtered.map(r => r[rowKey]).filter(Boolean))
     const cleaned = (currentFilters[filter] as string[]).filter(v => valid.has(v))
     patch[filter] = cleaned
@@ -88,7 +101,7 @@ export function cascadeReset(
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function useFacetedOptions(filters: FilterState): {
+export function useFacetedOptions(filters: FilterState, activeDimIds?: string[]): {
   options: FacetedOptions
   allRows: FacetRow[]
 } {
@@ -102,28 +115,34 @@ export function useFacetedOptions(filters: FilterState): {
   }, [])
 
   const options = useMemo((): FacetedOptions => {
-    const ccCliente = distinct(allRows, 'cc_cliente')
+    const chain = buildChain(activeDimIds ?? DEFAULT_ORDER)
+    const inChain = new Set(chain.map(c => c.filter))
 
-    const a1        = applyFilter(allRows, 'cc_cliente', filters.ccCliente)
-    const ccSede    = distinct(a1, 'cc_sede')
+    const dimOptions: Partial<Record<CascadeKey, string[]>> = {}
+    let filtered = allRows
 
-    const a2        = applyFilter(a1, 'cc_sede',         filters.ccSede)
-    const ccTipo    = distinct(a2, 'cc_tipo')
+    for (const { filter, rowKey } of chain) {
+      dimOptions[filter] = distinct(filtered, rowKey)
+      filtered = applyFilter(filtered, rowKey, filters[filter] as string[])
+    }
 
-    const a3        = applyFilter(a2, 'cc_tipo',         filters.ccTipo)
-    const categoria = distinct(a3, 'categoria')
+    // Dimensioni non nella chain: mostra tutti i valori disponibili senza cascata
+    for (const key of Object.keys(DIM_TO_ROW) as CascadeKey[]) {
+      if (!inChain.has(key)) {
+        dimOptions[key] = distinct(allRows, DIM_TO_ROW[key])
+      }
+    }
 
-    const a4        = applyFilter(a3, 'categoria',       filters.categoria)
-    const fornitore = distinct(a4, 'fornitore')
-
-    const a5        = applyFilter(a4, 'fornitore',       filters.fornitore)
-    const paese     = distinct(a5, 'paese')
-
-    const a6        = applyFilter(a5, 'paese',           filters.paese)
-    const targhe    = distinctTarghe(a6)
-
-    return { ccTipo, ccSede, ccCliente, categoria, fornitore, paese, targhe }
-  }, [allRows, filters.ccTipo, filters.ccSede, filters.ccCliente, filters.categoria, filters.fornitore, filters.paese])
+    return {
+      ccTipo:    dimOptions.ccTipo    ?? [],
+      ccSede:    dimOptions.ccSede    ?? [],
+      ccCliente: dimOptions.ccCliente ?? [],
+      categoria: dimOptions.categoria ?? [],
+      fornitore: dimOptions.fornitore ?? [],
+      paese:     dimOptions.paese     ?? [],
+      targhe:    distinctTarghe(filtered),
+    }
+  }, [allRows, filters.ccTipo, filters.ccSede, filters.ccCliente, filters.categoria, filters.fornitore, filters.paese, activeDimIds])
 
   return { options, allRows }
 }

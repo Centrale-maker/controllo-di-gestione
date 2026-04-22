@@ -6,7 +6,7 @@ import {
 import { X, GripVertical, RotateCcw } from 'lucide-react'
 import {
   FILTER_DIMENSIONS, dimById, CASCADE_DIM_IDS,
-  chipLabel, initialActiveDims, type FilterDimension,
+  chipLabel, type FilterDimension,
 } from './filterDimensions'
 import FilterValuePopover from './FilterValuePopover'
 import type { FilterState } from '@/types'
@@ -20,6 +20,8 @@ interface Props {
   setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
   patchFilters: (patch: Partial<FilterState>) => void
   resetFilters: () => void
+  activeDimIds: string[]
+  onActiveDimsChange: (ids: string[]) => void
 }
 
 function PalettePill({ dim }: { dim: FilterDimension }) {
@@ -50,17 +52,16 @@ function DropZone({ children }: { children: React.ReactNode }) {
   )
 }
 
-function resetDim(dimId: string, setFilter: Props['setFilter'], patchFilters: Props['patchFilters'], allRows: FacetRow[], filters: FilterState) {
+function resetDim(dimId: string, setFilter: Props['setFilter'], patchFilters: Props['patchFilters'], allRows: FacetRow[], filters: FilterState, activeDimIds: string[]) {
   if (CASCADE_DIM_IDS.has(dimId)) {
-    patchFilters(cascadeReset(allRows, dimId as CascadeKey, [], filters))
+    patchFilters(cascadeReset(allRows, dimId as CascadeKey, [], filters, activeDimIds))
   } else if (dimId === 'targa')     { setFilter('targa', []) }
   else if (dimId === 'rinnovi')     { setFilter('rinnovi', null) }
   else if (dimId === 'rimborso')    { setFilter('rimborso', null) }
   else if (dimId === 'dateRange')   { setFilter('dateRange', { from: null, to: null }) }
 }
 
-export default function DragFilterBar({ filters, options, allRows, setFilter, patchFilters, resetFilters }: Props) {
-  const [activeDimIds, setActiveDimIds] = useState<string[]>(() => initialActiveDims(filters))
+export default function DragFilterBar({ filters, options, allRows, setFilter, patchFilters, resetFilters, activeDimIds, onActiveDimsChange }: Props) {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null)
   const [draggingDimId, setDraggingDimId] = useState<string | null>(null)
 
@@ -73,19 +74,19 @@ export default function DragFilterBar({ filters, options, allRows, setFilter, pa
 
   function addDim(dimId: string) {
     if (!activeDimIds.includes(dimId)) {
-      setActiveDimIds(prev => [...prev, dimId])
+      onActiveDimsChange([...activeDimIds, dimId])
       setOpenPopoverId(dimId)
     }
   }
 
   function removeDim(dimId: string) {
-    setActiveDimIds(prev => prev.filter(id => id !== dimId))
+    onActiveDimsChange(activeDimIds.filter(id => id !== dimId))
     if (openPopoverId === dimId) setOpenPopoverId(null)
-    resetDim(dimId, setFilter, patchFilters, allRows, filters)
+    resetDim(dimId, setFilter, patchFilters, allRows, filters, activeDimIds)
   }
 
   function handleReset() {
-    setActiveDimIds([])
+    onActiveDimsChange([])
     setOpenPopoverId(null)
     resetFilters()
   }
@@ -165,6 +166,7 @@ export default function DragFilterBar({ filters, options, allRows, setFilter, pa
                       dim={dim} filters={filters} options={options} allRows={allRows}
                       setFilter={setFilter} patchFilters={patchFilters}
                       onClose={() => setOpenPopoverId(null)}
+                      activeDimIds={activeDimIds}
                     />
                   )}
                 </div>

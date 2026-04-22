@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { initialActiveDims } from '@/components/filters/filterDimensions'
 import { Search, SlidersHorizontal, Download, CheckCheck } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
@@ -20,8 +21,9 @@ export default function Dashboard() {
   const [exportOpen, setExportOpen] = useState(false)
 
   const { filters, setFilter, patchFilters, resetFilters, activeCount } = useFilters()
+  const [activeDimIds, setActiveDimIds] = useState<string[]>(() => initialActiveDims(filters))
   const { purchases, loading, error, updateRinnovi, updateRimborso, updateRow, deleteRow } = usePurchases(filters)
-  const { options, allRows } = useFacetedOptions(filters)
+  const { options, allRows } = useFacetedOptions(filters, activeDimIds)
   const { lastUpload, acknowledge } = useLastUpload()
   const { badges: planBadges, refresh: refreshPlanBadges } = usePlanBadges(purchases.map(p => p.id))
 
@@ -149,6 +151,8 @@ export default function Dashboard() {
         setFilter={setFilter}
         patchFilters={patchFilters}
         resetFilters={resetFilters}
+        activeDimIds={activeDimIds}
+        onActiveDimsChange={setActiveDimIds}
       />
       <main className="flex-1 overflow-y-auto px-6 py-6">
         {content}

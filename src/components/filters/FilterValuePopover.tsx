@@ -13,6 +13,7 @@ interface Props {
   setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
   patchFilters: (patch: Partial<FilterState>) => void
   onClose: () => void
+  activeDimIds?: string[]
 }
 
 function getOpts(dimId: string, options: FacetedOptions): string[] {
@@ -42,19 +43,19 @@ function getSelected(dimId: string, filters: FilterState): string[] {
 }
 
 function applyMultiselect(dimId: string, v: string[], allRows: FacetRow[], filters: FilterState,
-  setFilter: Props['setFilter'], patchFilters: Props['patchFilters']) {
+  setFilter: Props['setFilter'], patchFilters: Props['patchFilters'], activeDimIds?: string[]) {
   switch (dimId) {
-    case 'ccCliente': patchFilters(cascadeReset(allRows, 'ccCliente' as CascadeKey, v, filters)); break
-    case 'ccSede':    patchFilters(cascadeReset(allRows, 'ccSede'    as CascadeKey, v, filters)); break
-    case 'ccTipo':    patchFilters(cascadeReset(allRows, 'ccTipo'    as CascadeKey, v, filters)); break
-    case 'categoria': patchFilters(cascadeReset(allRows, 'categoria' as CascadeKey, v, filters)); break
-    case 'fornitore': patchFilters(cascadeReset(allRows, 'fornitore' as CascadeKey, v, filters)); break
-    case 'paese':     patchFilters(cascadeReset(allRows, 'paese'     as CascadeKey, v, filters)); break
+    case 'ccCliente': patchFilters(cascadeReset(allRows, 'ccCliente' as CascadeKey, v, filters, activeDimIds)); break
+    case 'ccSede':    patchFilters(cascadeReset(allRows, 'ccSede'    as CascadeKey, v, filters, activeDimIds)); break
+    case 'ccTipo':    patchFilters(cascadeReset(allRows, 'ccTipo'    as CascadeKey, v, filters, activeDimIds)); break
+    case 'categoria': patchFilters(cascadeReset(allRows, 'categoria' as CascadeKey, v, filters, activeDimIds)); break
+    case 'fornitore': patchFilters(cascadeReset(allRows, 'fornitore' as CascadeKey, v, filters, activeDimIds)); break
+    case 'paese':     patchFilters(cascadeReset(allRows, 'paese'     as CascadeKey, v, filters, activeDimIds)); break
     case 'targa':     setFilter('targa', v); break
   }
 }
 
-export default function FilterValuePopover({ dim, filters, options, allRows, setFilter, patchFilters, onClose }: Props) {
+export default function FilterValuePopover({ dim, filters, options, allRows, setFilter, patchFilters, onClose, activeDimIds }: Props) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export default function FilterValuePopover({ dim, filters, options, allRows, set
           label=""
           options={getOpts(dim.id, options)}
           selected={getSelected(dim.id, filters)}
-          onChange={v => applyMultiselect(dim.id, v, allRows, filters, setFilter, patchFilters)}
+          onChange={v => applyMultiselect(dim.id, v, allRows, filters, setFilter, patchFilters, activeDimIds)}
         />
       )}
 

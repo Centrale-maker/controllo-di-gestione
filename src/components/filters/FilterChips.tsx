@@ -14,6 +14,7 @@ interface Props {
   allRows: FacetRow[]
   setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
   patchFilters: (patch: Partial<FilterState>) => void
+  activeDimIds?: string[]
 }
 
 const CASCADE_KEYS = new Set<string>(['ccTipo', 'ccSede', 'ccCliente', 'categoria', 'fornitore', 'paese'])
@@ -28,7 +29,7 @@ const ARRAY_FILTERS: Array<[keyof FilterState, string]> = [
   ['targa',     'Targa'],
 ]
 
-export default function FilterChips({ filters, allRows, setFilter, patchFilters }: Props) {
+export default function FilterChips({ filters, allRows, setFilter, patchFilters, activeDimIds }: Props) {
   const chips: Chip[] = []
 
   for (const [key, label] of ARRAY_FILTERS) {
@@ -40,7 +41,7 @@ export default function FilterChips({ filters, allRows, setFilter, patchFilters 
         onRemove: () => {
           const next = vals.filter(v => v !== val)
           if (CASCADE_KEYS.has(String(key))) {
-            patchFilters(cascadeReset(allRows, key as CascadeKey, next, filters))
+            patchFilters(cascadeReset(allRows, key as CascadeKey, next, filters, activeDimIds))
           } else {
             setFilter(key, next as FilterState[typeof key])
           }

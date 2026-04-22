@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
+import { initialActiveDims } from '@/components/filters/filterDimensions'
 import { useNavigate } from 'react-router-dom'
 import { SlidersHorizontal } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
@@ -38,8 +39,9 @@ export default function Analytics() {
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const { filters, setFilter, patchFilters, resetFilters, activeCount } = useFilters()
+  const [activeDimIds, setActiveDimIds] = useState<string[]>(() => initialActiveDims(filters))
   const { purchases, loading } = usePurchases(filters)
-  const { options, allRows } = useFacetedOptions(filters)
+  const { options, allRows } = useFacetedOptions(filters, activeDimIds)
 
   const monthly     = useMemo(() => getMonthlyCashflow(purchases), [purchases])
   const categorie   = useMemo(() => getByField(purchases, 'categoria', 8), [purchases])
@@ -137,6 +139,8 @@ export default function Analytics() {
         setFilter={setFilter}
         patchFilters={patchFilters}
         resetFilters={resetFilters}
+        activeDimIds={activeDimIds}
+        onActiveDimsChange={setActiveDimIds}
       />
       <main className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {charts}
