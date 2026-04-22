@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
-import { useFilterOptions } from '@/hooks/useFilterOptions'
+import { useFacetedOptions } from '@/hooks/useFacetedOptions'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { getMonthlyCashflow, getByField, getRinnovi } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/utils'
@@ -26,9 +26,9 @@ export default function Analytics() {
   const isMobile = useIsMobile()
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const { filters, setFilter, resetFilters, activeCount } = useFilters()
+  const { filters, setFilter, patchFilters, resetFilters, activeCount } = useFilters()
   const { purchases, loading } = usePurchases(filters)
-  const options = useFilterOptions()
+  const { options, allRows } = useFacetedOptions(filters)
 
   const monthly     = useMemo(() => getMonthlyCashflow(purchases), [purchases])
   const categorie   = useMemo(() => getByField(purchases, 'categoria', 8), [purchases])
@@ -41,7 +41,7 @@ export default function Analytics() {
   const imponibile = useMemo(() => purchases.reduce((s, p) => s + Number(p.imponibile), 0), [purchases])
   const iva        = useMemo(() => purchases.reduce((s, p) => s + Number(p.iva), 0), [purchases])
 
-  const filterProps = { filters, options, activeCount, setFilter, resetFilters }
+  const filterProps = { filters, options, allRows, activeCount, setFilter, patchFilters, resetFilters }
 
   const charts = loading ? (
     <div className="flex items-center justify-center py-20">

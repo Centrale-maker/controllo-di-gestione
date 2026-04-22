@@ -4,6 +4,7 @@ import { defaultFilterState, type FilterState } from '@/types'
 interface FiltersContextValue {
   filters: FilterState
   setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
+  patchFilters: (patch: Partial<FilterState>) => void
   resetFilters: () => void
   activeCount: number
 }
@@ -15,6 +16,10 @@ export function FiltersProvider({ children }: { children: ReactNode }) {
 
   const setFilter = useCallback(<K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     setFiltersState(prev => ({ ...prev, [key]: value }))
+  }, [])
+
+  const patchFilters = useCallback((patch: Partial<FilterState>) => {
+    setFiltersState(prev => ({ ...prev, ...patch }))
   }, [])
 
   const resetFilters = useCallback(() => setFiltersState(defaultFilterState), [])
@@ -29,7 +34,7 @@ export function FiltersProvider({ children }: { children: ReactNode }) {
   }).length
 
   return (
-    <FiltersContext.Provider value={{ filters, setFilter, resetFilters, activeCount }}>
+    <FiltersContext.Provider value={{ filters, setFilter, patchFilters, resetFilters, activeCount }}>
       {children}
     </FiltersContext.Provider>
   )

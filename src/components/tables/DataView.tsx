@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import type { FilterOptions } from '@/hooks/useFilterOptions'
+import type { FacetedOptions } from '@/hooks/useFacetedOptions'
 import DataTable from './DataTable'
 import DataCards from './DataCards'
 import RowEditModal from './RowEditModal'
@@ -15,7 +15,7 @@ interface Props {
   purchases:          Purchase[]
   loading:            boolean
   error:              string | null
-  options:            FilterOptions
+  options:            FacetedOptions
   onRinnoviChange:    (id: string, value: 'ricorrente' | 'una tantum' | null) => Promise<void>
   onRimborsoChange:   (id: string, value: 'rimborsata' | 'non rimborsata' | null) => Promise<void>
   onRowUpdate:        (id: string, patch: RowPatch) => Promise<void>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Search, SlidersHorizontal, Download, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
-import { useFilterOptions } from '@/hooks/useFilterOptions'
+import { useFacetedOptions } from '@/hooks/useFacetedOptions'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useLastUpload } from '@/hooks/useLastUpload'
 import { usePlanBadges } from '@/hooks/usePlanBadges'
@@ -27,13 +27,13 @@ export default function Dashboard() {
     localStorage.setItem('filters-panel-open', String(next))
   }
 
-  const { filters, setFilter, resetFilters, activeCount } = useFilters()
+  const { filters, setFilter, patchFilters, resetFilters, activeCount } = useFilters()
   const { purchases, loading, error, updateRinnovi, updateRimborso, updateRow, deleteRow } = usePurchases(filters)
-  const options = useFilterOptions()
+  const { options, allRows } = useFacetedOptions(filters)
   const { lastUpload, acknowledge } = useLastUpload()
   const { badges: planBadges, refresh: refreshPlanBadges } = usePlanBadges(purchases.map(p => p.id))
 
-  const filterProps = { filters, options, activeCount, setFilter, resetFilters }
+  const filterProps = { filters, options, allRows, activeCount, setFilter, patchFilters, resetFilters }
 
   const newCount = lastUpload ? (lastUpload.rows_added + lastUpload.rows_updated) : 0
 

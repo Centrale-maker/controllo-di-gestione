@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { X, Pencil, Plus } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { Purchase } from '@/types'
-import type { FilterOptions } from '@/hooks/useFilterOptions'
+import type { FacetedOptions } from '@/hooks/useFacetedOptions'
 
 export type RowPatch = Partial<Pick<Purchase, 'cc_tipo' | 'cc_sede' | 'cc_cliente' | 'categoria' | 'targhe'>>
 
 interface Props {
   purchase: Purchase | null
-  options:  FilterOptions
+  options:  FacetedOptions
   onSave:   (id: string, patch: RowPatch) => Promise<void>
   onClose:  () => void
 }

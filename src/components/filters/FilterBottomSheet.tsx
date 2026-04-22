@@ -1,15 +1,17 @@
 import { X } from 'lucide-react'
 import FilterPanel from './FilterPanel'
 import type { FilterState } from '@/types'
-import type { FilterOptions } from '@/hooks/useFilterOptions'
+import type { FacetedOptions, FacetRow } from '@/hooks/useFacetedOptions'
 
 interface Props {
   open: boolean
   onClose: () => void
   filters: FilterState
-  options: FilterOptions
+  options: FacetedOptions
+  allRows: FacetRow[]
   activeCount: number
   setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void
+  patchFilters: (patch: Partial<FilterState>) => void
   resetFilters: () => void
 }
 
