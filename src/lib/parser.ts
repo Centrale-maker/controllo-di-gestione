@@ -28,7 +28,7 @@ const HEADER_MAP: Record<string, string> = {
   'contrassegnato': 'contrassegnato',
 }
 
-// ─── Tipi per il mapping cc ───────────────────────────────────────────────────
+// ─── Parsing Centro Costo ────────────────────────────────────────────────────
 
 export interface CcParsed {
   cc_tipo: string | null
@@ -36,61 +36,18 @@ export interface CcParsed {
   cc_cliente: string | null
 }
 
-/** Map<raw_value_normalizzato, CcParsed> — caricata da Supabase prima del parse */
-export type CcMappingMap = Map<string, CcParsed>
-
-// ─── Regole parsing Centro Costo ─────────────────────────────────────────────
-
-// Prefissi riconosciuti come "tipo" — ordinati dal più lungo al più corto
-// per evitare match parziali (es. "Spese di rappresentanza" prima di "Rappresentanza")
-const CC_PREFIXES = [
-  'Spese di rappresentanza',
-  'Amministrazione',
-  'Rappresentanza',
-  'Logistica',
-  'Marketing',
-  'Sviluppo',
-]
-
-// Codici cliente: sempre le ultime parole in MAIUSCOLO di 2-3 lettere
-const CLIENT_CODES = new Set(['AD', 'ADB'])
-
-/** Normalizza il valore grezzo: trim, spazi multipli, correzione typo noti */
-function normalizeCc(raw: string): string {
-  return raw
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/\bLogtica\b/gi, 'Logistica')
-    .replace(/\bLostica\b/gi, 'Logistica')
-    .replace(/\bLogtica\b/gi, 'Logistica')   // catch-all case variation
-}
-
-/** Auto-parsing quando il valore non è in cc_mapping */
-function autoParseCc(normalized: string): CcParsed {
-  for (const prefix of CC_PREFIXES) {
-    if (normalized.toLowerCase().startsWith(prefix.toLowerCase())) {
-      const remainder = normalized.slice(prefix.length).trim()
-      if (!remainder) return { cc_tipo: prefix, cc_sede: null, cc_cliente: null }
-
-      const parts = remainder.split(' ')
-      const last = parts[parts.length - 1]
-      if (CLIENT_CODES.has(last)) {
-        const sede = parts.slice(0, -1).join(' ').trim()
-        return { cc_tipo: prefix, cc_sede: sede || null, cc_cliente: last }
-      }
-      return { cc_tipo: prefix, cc_sede: remainder, cc_cliente: null }
-    }
-  }
-  // Nessun prefisso riconosciuto → intero valore come cc_tipo
-  return { cc_tipo: normalized || null, cc_sede: null, cc_cliente: null }
-}
-
-/** Risolve le tre componenti cc per un singolo valore grezzo */
-function parseCentroCosto(raw: string | null, mapping: CcMappingMap): CcParsed {
+/**
+ * Splitta il valore della colonna F su ", " (virgola + spazio).
+ * Formato atteso: "CentrodiCosto, Sede, Cliente"
+ */
+function parseCentroCosto(raw: string | null): CcParsed {
   if (!raw) return { cc_tipo: null, cc_sede: null, cc_cliente: null }
-  const normalized = normalizeCc(raw)
-  if (mapping.has(normalized)) return mapping.get(normalized)!
-  return autoParseCc(normalized)
+  const parts = raw.split(',').map(p => p.trim()).filter(Boolean)
+  return {
+    cc_tipo: parts[0] ?? null,
+    cc_sede: parts[1] ?? null,
+    cc_cliente: parts[2] ?? null,
+  }
 }
 
 // ─── Estrazione targhe ───────────────────────────────────────────────────────
@@ -152,8 +109,7 @@ function toRinnovi(v: unknown): 'ricorrente' | 'una tantum' | null {
 
 function buildRow(
   idx: Map<string, number>,
-  row: unknown[],
-  mapping: CcMappingMap
+  row: unknown[]
 ): PurchaseInsert | null {
   const g = (f: string): unknown => {
     const i = idx.get(f)
@@ -165,7 +121,7 @@ function buildRow(
   if (!nr_acquisto || !data) return null
 
   const centro_costo = toStr(g('centro_costo'))
-  const { cc_tipo, cc_sede, cc_cliente } = parseCentroCosto(centro_costo, mapping)
+  const { cc_tipo, cc_sede, cc_cliente } = parseCentroCosto(centro_costo)
 
   return {
     upload_id: null,
@@ -217,15 +173,8 @@ function findHeaderRowIndex(rows: unknown[][]): number {
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-/**
- * Parsa un file Excel FattureInCloud e restituisce le righe pronte per l'upsert.
- * @param file      File .xlsx o .xls selezionato dall'utente
- * @param ccMapping Map<raw_value_normalizzato, CcParsed> caricata da Supabase
- */
-export async function parseExcel(
-  file: File,
-  ccMapping: CcMappingMap = new Map()
-): Promise<PurchaseInsert[]> {
+/** Parsa un file Excel FattureInCloud e restituisce le righe pronte per l'upsert. */
+export async function parseExcel(file: File): Promise<PurchaseInsert[]> {
   const buffer = await file.arrayBuffer()
   const wb = XLSX.read(buffer, { type: 'array', cellDates: true })
   const ws = wb.Sheets[wb.SheetNames[0]]
@@ -246,6 +195,6 @@ export async function parseExcel(
   return rows
     .slice(headerIdx + 1)
     .filter(row => (row as unknown[]).some(c => c !== null))
-    .map(row => buildRow(fieldIndex, row as unknown[], ccMapping))
+    .map(row => buildRow(fieldIndex, row as unknown[]))
     .filter((p): p is PurchaseInsert => p !== null)
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { parseExcel, type CcMappingMap } from '@/lib/parser'
+import { parseExcel } from '@/lib/parser'
 import { upsertPurchases, type UpsertResult } from '@/lib/upsert'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -48,27 +48,16 @@ export function useUpload() {
       if (insertError) throw new Error(insertError.message)
       uploadId = uploadRow.id as string
 
-      // 2. Carica cc_mapping da Supabase
-      const { data: mappingRows } = await supabase
-        .from('cc_mapping')
-        .select('raw_value, cc_tipo, cc_sede, cc_cliente')
-      const ccMapping: CcMappingMap = new Map(
-        (mappingRows ?? []).map(r => [
-          r.raw_value,
-          { cc_tipo: r.cc_tipo, cc_sede: r.cc_sede, cc_cliente: r.cc_cliente },
-        ])
-      )
+      // 2. Parse del file Excel
+      const purchases = await parseExcel(file)
 
-      // 3. Parse del file Excel
-      const purchases = await parseExcel(file, ccMapping)
-
-      // 4. Upsert con progress
+      // 3. Upsert con progress
       setState(s => ({ ...s, status: 'uploading' }))
       const result = await upsertPurchases(purchases, uploadId, companyId, pct => {
         setState(s => ({ ...s, progress: pct }))
       })
 
-      // 5. Aggiorna record upload con risultati
+      // 4. Aggiorna record upload con risultati
       await supabase
         .from('uploads')
         .update({
