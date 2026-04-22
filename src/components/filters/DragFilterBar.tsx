@@ -67,7 +67,20 @@ export default function DragFilterBar({ filters, options, allRows, setFilter, pa
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
-  const visibleDims = FILTER_DIMENSIONS.filter(d => d.id !== 'targa' || options.targhe.length > 0)
+  const visibleDims = FILTER_DIMENSIONS.filter(d => {
+    switch (d.id) {
+      case 'ccCliente': return options.ccCliente.length > 0
+      case 'ccSede':    return options.ccSede.length > 0
+      case 'ccTipo':    return options.ccTipo.length > 0
+      case 'categoria': return options.categoria.length > 0
+      case 'fornitore': return options.fornitore.length > 0
+      case 'paese':     return options.paese.length > 0
+      case 'targa':     return options.targhe.length > 0
+      case 'rinnovi':   return options.hasRinnovi
+      case 'rimborso':  return options.hasRimborso
+      default:          return true
+    }
+  })
   const paletteDims = visibleDims.filter(d => !activeDimIds.includes(d.id))
   const activeChips = activeDimIds.map(id => dimById(id)).filter((d): d is FilterDimension => !!d)
   const activeCount = activeDimIds.length

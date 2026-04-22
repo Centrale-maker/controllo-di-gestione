@@ -12,6 +12,9 @@ export type FacetRow = {
   fornitore: string | null
   paese: string | null
   targhe: string[] | null
+  rinnovi: string | null
+  rimborso: string | null
+  data: string | null
 }
 
 export interface FacetedOptions {
@@ -22,9 +25,11 @@ export interface FacetedOptions {
   fornitore: string[]
   paese: string[]
   targhe: string[]
+  hasRinnovi: boolean
+  hasRimborso: boolean
 }
 
-type ScalarKey = keyof Omit<FacetRow, 'targhe'>
+type ScalarKey = 'cc_tipo' | 'cc_sede' | 'cc_cliente' | 'categoria' | 'fornitore' | 'paese'
 
 // ─── Cascade ─────────────────────────────────────────────────────────────────
 
@@ -62,13 +67,35 @@ function applyFilter(rows: FacetRow[], key: ScalarKey, selected: string[]): Face
   return rows.filter(r => r[key] !== null && selected.includes(r[key] as string))
 }
 
+// Applica tutti i filtri non-cascade (rimborso, rinnovi, dateRange, targa)
+// alla base di dati prima di calcolare le opzioni cascade.
+function applyNonCascadeFilters(rows: FacetRow[], filters: FilterState): FacetRow[] {
+  let result = rows
+
+  if (filters.rimborso !== null)
+    result = result.filter(r => r.rimborso === filters.rimborso)
+
+  if (filters.rinnovi !== null)
+    result = result.filter(r => r.rinnovi === filters.rinnovi)
+
+  if (filters.dateRange.from || filters.dateRange.to) {
+    result = result.filter(r => {
+      if (!r.data) return false
+      const d = new Date(r.data + 'T00:00:00')
+      if (filters.dateRange.from && d < filters.dateRange.from) return false
+      if (filters.dateRange.to && d > filters.dateRange.to) return false
+      return true
+    })
+  }
+
+  if (filters.targa.length > 0)
+    result = result.filter(r => r.targhe !== null && filters.targa.some(t => r.targhe!.includes(t)))
+
+  return result
+}
+
 // ─── Cascade reset ───────────────────────────────────────────────────────────
 
-/**
- * Calcola le modifiche da applicare ai filtri downstream quando cambia
- * un filtro upstream. La gerarchia è determinata da activeDimIds (ordine
- * di aggiunta nella DragFilterBar); se omesso usa l'ordine di default.
- */
 export function cascadeReset(
   allRows: FacetRow[],
   changedKey: CascadeKey,
@@ -92,7 +119,6 @@ export function cascadeReset(
     filtered = applyFilter(filtered, rowKey, cleaned)
   }
 
-  // Targa è l'ultimo livello
   const validTarghe = new Set(filtered.flatMap(r => r.targhe ?? []))
   patch.targa = currentFilters.targa.filter(t => validTarghe.has(t))
 
@@ -110,39 +136,51 @@ export function useFacetedOptions(filters: FilterState, activeDimIds?: string[])
   useEffect(() => {
     supabase
       .from('purchases')
-      .select('cc_tipo, cc_sede, cc_cliente, categoria, fornitore, paese, targhe')
+      .select('cc_tipo, cc_sede, cc_cliente, categoria, fornitore, paese, targhe, rinnovi, rimborso, data')
       .then(({ data }) => setAllRows((data ?? []) as FacetRow[]))
   }, [])
 
   const options = useMemo((): FacetedOptions => {
+    // Prima applica tutti i filtri non-cascade (rimborso, rinnovi, dateRange, targa)
+    const baseRows = applyNonCascadeFilters(allRows, filters)
+
     const chain = buildChain(activeDimIds ?? DEFAULT_ORDER)
     const inChain = new Set(chain.map(c => c.filter))
 
     const dimOptions: Partial<Record<CascadeKey, string[]>> = {}
-    let filtered = allRows
+    let filtered = baseRows
 
     for (const { filter, rowKey } of chain) {
       dimOptions[filter] = distinct(filtered, rowKey)
       filtered = applyFilter(filtered, rowKey, filters[filter] as string[])
     }
 
-    // Dimensioni non nella chain: mostra tutti i valori disponibili senza cascata
+    // Dimensioni non nella chain: opzioni calcolate su baseRows (rispetta filtri non-cascade)
     for (const key of Object.keys(DIM_TO_ROW) as CascadeKey[]) {
       if (!inChain.has(key)) {
-        dimOptions[key] = distinct(allRows, DIM_TO_ROW[key])
+        dimOptions[key] = distinct(baseRows, DIM_TO_ROW[key])
       }
     }
 
     return {
-      ccTipo:    dimOptions.ccTipo    ?? [],
-      ccSede:    dimOptions.ccSede    ?? [],
-      ccCliente: dimOptions.ccCliente ?? [],
-      categoria: dimOptions.categoria ?? [],
-      fornitore: dimOptions.fornitore ?? [],
-      paese:     dimOptions.paese     ?? [],
-      targhe:    distinctTarghe(filtered),
+      ccTipo:     dimOptions.ccTipo    ?? [],
+      ccSede:     dimOptions.ccSede    ?? [],
+      ccCliente:  dimOptions.ccCliente ?? [],
+      categoria:  dimOptions.categoria ?? [],
+      fornitore:  dimOptions.fornitore ?? [],
+      paese:      dimOptions.paese     ?? [],
+      targhe:     distinctTarghe(filtered),
+      hasRinnovi: filtered.some(r => r.rinnovi !== null),
+      hasRimborso: filtered.some(r => r.rimborso !== null),
     }
-  }, [allRows, filters.ccTipo, filters.ccSede, filters.ccCliente, filters.categoria, filters.fornitore, filters.paese, activeDimIds])
+  }, [
+    allRows,
+    filters.ccTipo, filters.ccSede, filters.ccCliente,
+    filters.categoria, filters.fornitore, filters.paese,
+    filters.rimborso, filters.rinnovi,
+    filters.dateRange, filters.targa,
+    activeDimIds,
+  ])
 
   return { options, allRows }
 }
