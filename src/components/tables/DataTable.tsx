@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, Pencil, Trash2, ReceiptText } from 'lucide-reac
 import { formatCurrency, formatDate } from '@/lib/utils'
 import RinnoviPill from './RinnoviPill'
 import RimborsoPill from './RimborsoPill'
+import CellTooltip from './CellTooltip'
 import type { Purchase } from '@/types'
 import type { PlanBadge } from '@/hooks/usePlanBadges'
 
@@ -123,9 +124,12 @@ export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange
                 {COLS.map(col => (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 text-[#1A202C] truncate ${col.key === 'descrizione' ? 'max-w-[280px]' : 'max-w-[200px]'} ${col.align === 'right' ? 'text-right font-medium' : ''}`}
+                    className={`px-4 py-3 text-[#1A202C] ${col.key === 'descrizione' ? 'max-w-[280px]' : 'max-w-[200px]'} ${col.align === 'right' ? 'text-right font-medium' : ''}`}
                   >
-                    {col.render(p)}
+                    {col.align === 'right'
+                      ? col.render(p)
+                      : <CellTooltip text={col.render(p)} />
+                    }
                   </td>
                 ))}
                 <td className="px-4 py-2.5">
