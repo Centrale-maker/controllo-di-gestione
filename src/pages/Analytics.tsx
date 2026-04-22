@@ -6,9 +6,9 @@ import { useFacetedOptions } from '@/hooks/useFacetedOptions'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { getMonthlyCashflow, getByField, getRinnovi } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/utils'
-import FilterPanel from '@/components/filters/FilterPanel'
 import FilterBottomSheet from '@/components/filters/FilterBottomSheet'
 import FilterChips from '@/components/filters/FilterChips'
+import DragFilterBar from '@/components/filters/DragFilterBar'
 import CashflowChart from '@/components/charts/CashflowChart'
 import CategorieChart from '@/components/charts/CategorieChart'
 import HBarChart from '@/components/charts/HBarChart'
@@ -114,15 +114,16 @@ export default function Analytics() {
 
   /* ── Desktop ── */
   return (
-    <div className="flex h-full">
-      {/* Sidebar filtri */}
-      <aside className="w-72 shrink-0 border-r border-[#E2E8F0] bg-white overflow-y-auto p-5">
-        <FilterPanel {...filterProps} />
-      </aside>
-
-      {/* Contenuto */}
+    <div className="flex flex-col h-full">
+      <DragFilterBar
+        filters={filters}
+        options={options}
+        allRows={allRows}
+        setFilter={setFilter}
+        patchFilters={patchFilters}
+        resetFilters={resetFilters}
+      />
       <main className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-        <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />
         {charts}
       </main>
     </div>

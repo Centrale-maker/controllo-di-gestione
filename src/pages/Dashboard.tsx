@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, SlidersHorizontal, Download, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, SlidersHorizontal, Download, CheckCheck } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
 import { useFacetedOptions } from '@/hooks/useFacetedOptions'
@@ -9,24 +9,15 @@ import { usePlanBadges } from '@/hooks/usePlanBadges'
 import { formatDate } from '@/lib/utils'
 import KPIStrip from '@/components/kpi/KPIStrip'
 import DataView from '@/components/tables/DataView'
-import FilterPanel from '@/components/filters/FilterPanel'
 import FilterBottomSheet from '@/components/filters/FilterBottomSheet'
 import FilterChips from '@/components/filters/FilterChips'
+import DragFilterBar from '@/components/filters/DragFilterBar'
 import ExportDialog from '@/components/export/ExportDialog'
 
 export default function Dashboard() {
   const isMobile = useIsMobile()
-  const [sheetOpen, setSheetOpen]     = useState(false)
-  const [exportOpen, setExportOpen]   = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(() =>
-    localStorage.getItem('filters-panel-open') !== 'false'
-  )
-
-  function toggleFilters() {
-    const next = !filtersOpen
-    setFiltersOpen(next)
-    localStorage.setItem('filters-panel-open', String(next))
-  }
+  const [sheetOpen, setSheetOpen]   = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const { filters, setFilter, patchFilters, resetFilters, activeCount } = useFilters()
   const { purchases, loading, error, updateRinnovi, updateRimborso, updateRow, deleteRow } = usePurchases(filters)
@@ -91,7 +82,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />
+      {isMobile && <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />}
 
       {!loading && (
         <div className="flex items-center justify-between gap-2">
@@ -150,58 +141,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-full">
-      {/* Pannello filtri collassabile */}
-      <aside
-        className={`relative shrink-0 border-r border-[#E2E8F0] bg-white transition-[width] duration-200 ${
-          filtersOpen ? 'w-72' : 'w-12'
-        }`}
-      >
-        {filtersOpen ? (
-          <div className="h-full overflow-y-auto p-5">
-            {/* Header filtri con toggle */}
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-bold text-[#1A202C]">Filtri</h3>
-              <button
-                onClick={toggleFilters}
-                title="Comprimi filtri"
-                className="p-1.5 rounded-md text-[#64748B] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-            </div>
-            <FilterPanel {...filterProps} />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center pt-4 gap-3">
-            <button
-              onClick={toggleFilters}
-              title="Apri filtri"
-              className="relative p-2.5 rounded-lg text-[#64748B] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"
-            >
-              <SlidersHorizontal size={18} />
-              {activeCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#1E3A5F] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                  {activeCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={toggleFilters}
-              title="Apri filtri"
-              className="p-1 rounded text-[#CBD5E0] hover:text-[#64748B] transition-colors"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        )}
-      </aside>
-
-      {/* Contenuto */}
+    <div className="flex flex-col h-full">
+      <DragFilterBar
+        filters={filters}
+        options={options}
+        allRows={allRows}
+        setFilter={setFilter}
+        patchFilters={patchFilters}
+        resetFilters={resetFilters}
+      />
       <main className="flex-1 overflow-y-auto px-6 py-6">
         {content}
       </main>
-
       {exportDialog}
     </div>
   )
