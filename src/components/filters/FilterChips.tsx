@@ -19,9 +19,9 @@ interface Props {
 const CASCADE_KEYS = new Set<string>(['ccTipo', 'ccSede', 'ccCliente', 'categoria', 'fornitore', 'paese'])
 
 const ARRAY_FILTERS: Array<[keyof FilterState, string]> = [
-  ['ccTipo',    'Tipo CC'],
-  ['ccSede',    'Sede'],
   ['ccCliente', 'Cliente'],
+  ['ccSede',    'Sede'],
+  ['ccTipo',    'Centro di costo'],
   ['categoria', 'Categoria'],
   ['fornitore', 'Fornitore'],
   ['paese',     'Paese'],

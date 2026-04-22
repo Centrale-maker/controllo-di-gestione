@@ -91,10 +91,10 @@ export default function FilterPanel({
 
       <div className="h-px bg-[#E2E8F0]" />
 
-      {/* Centro di costo — cascata: Tipo → Sede → Cliente */}
-      {options.ccTipo.length > 0 && (
-        <CheckList label="Tipo CC" options={options.ccTipo} selected={filters.ccTipo}
-          onChange={v => cc('ccTipo', v)} />
+      {/* Centro di costo — cascata: Cliente → Sede → Tipo CC */}
+      {options.ccCliente.length > 0 && (
+        <CheckList label="Cliente" options={options.ccCliente} selected={filters.ccCliente}
+          onChange={v => cc('ccCliente', v)} />
       )}
 
       {options.ccSede.length > 0 && (
@@ -105,11 +105,11 @@ export default function FilterPanel({
         </>
       )}
 
-      {options.ccCliente.length > 0 && (
+      {options.ccTipo.length > 0 && (
         <>
           <div className="h-px bg-[#E2E8F0]" />
-          <CheckList label="Cliente" options={options.ccCliente} selected={filters.ccCliente}
-            onChange={v => cc('ccCliente', v)} />
+          <CheckList label="Centro di costo" options={options.ccTipo} selected={filters.ccTipo}
+            onChange={v => cc('ccTipo', v)} />
         </>
       )}
 

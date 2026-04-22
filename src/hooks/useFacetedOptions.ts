@@ -31,9 +31,9 @@ type ScalarKey = keyof Omit<FacetRow, 'targhe'>
 export type CascadeKey = 'ccTipo' | 'ccSede' | 'ccCliente' | 'categoria' | 'fornitore' | 'paese'
 
 const CHAIN: Array<{ filter: CascadeKey; rowKey: ScalarKey }> = [
-  { filter: 'ccTipo',    rowKey: 'cc_tipo'    },
-  { filter: 'ccSede',    rowKey: 'cc_sede'    },
   { filter: 'ccCliente', rowKey: 'cc_cliente' },
+  { filter: 'ccSede',    rowKey: 'cc_sede'    },
+  { filter: 'ccTipo',    rowKey: 'cc_tipo'    },
   { filter: 'categoria', rowKey: 'categoria'  },
   { filter: 'fornitore', rowKey: 'fornitore'  },
   { filter: 'paese',     rowKey: 'paese'      },
@@ -102,15 +102,15 @@ export function useFacetedOptions(filters: FilterState): {
   }, [])
 
   const options = useMemo((): FacetedOptions => {
-    const ccTipo    = distinct(allRows, 'cc_tipo')
+    const ccCliente = distinct(allRows, 'cc_cliente')
 
-    const a1        = applyFilter(allRows, 'cc_tipo',    filters.ccTipo)
+    const a1        = applyFilter(allRows, 'cc_cliente', filters.ccCliente)
     const ccSede    = distinct(a1, 'cc_sede')
 
     const a2        = applyFilter(a1, 'cc_sede',         filters.ccSede)
-    const ccCliente = distinct(a2, 'cc_cliente')
+    const ccTipo    = distinct(a2, 'cc_tipo')
 
-    const a3        = applyFilter(a2, 'cc_cliente',      filters.ccCliente)
+    const a3        = applyFilter(a2, 'cc_tipo',         filters.ccTipo)
     const categoria = distinct(a3, 'categoria')
 
     const a4        = applyFilter(a3, 'categoria',       filters.categoria)
