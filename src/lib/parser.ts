@@ -65,6 +65,7 @@ export function extractTarghe(text: string | null): string[] | null {
 
 function toDate(v: unknown): string | null {
   if (!v) return null
+
   if (v instanceof Date) {
     // SheetJS con cellDates:true restituisce Date in UTC ma i valori Excel sono
     // date locali (mezzanotte). In Italia (UTC+2 estate) "3 aprile" diventa
@@ -73,6 +74,27 @@ function toDate(v: unknown): string | null {
     const adjusted = new Date(v.getTime() + 12 * 60 * 60 * 1000)
     return adjusted.toISOString().slice(0, 10)
   }
+
+  // Numero seriale Excel (es. 46123) — fallback se cellDates:true non lo converte
+  if (typeof v === 'number') {
+    const parsed = XLSX.SSF.parse_date_code(v)
+    if (parsed) {
+      return `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`
+    }
+  }
+
+  // Stringa data in vari formati italiani: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD
+  if (typeof v === 'string') {
+    const s = v.trim()
+    const itMatch = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/)
+    if (itMatch) {
+      const [, d, m, y] = itMatch
+      const year = y.length === 2 ? parseInt(y) + 2000 : parseInt(y)
+      return `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+    }
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
+  }
+
   return null
 }
 
@@ -105,6 +127,19 @@ function toRinnovi(v: unknown): 'ricorrente' | 'una tantum' | null {
   return null
 }
 
+// ─── ID sintetico per righe senza Nr. acquisto ──────────────────────────────
+
+// Genera un ID deterministico (djb2 hash) per spese senza numero fattura.
+// Stesso file importato N volte → stesso ID → nessun duplicato.
+function syntheticNr(data: string, fornitore: string, descrizione: string, imponibile: number): string {
+  const raw = `${data}|${fornitore}|${descrizione}|${imponibile}`
+  let h = 5381
+  for (let i = 0; i < raw.length; i++) {
+    h = Math.imul((h << 5) + h, 1) ^ raw.charCodeAt(i)
+  }
+  return `NOID-${(h >>> 0).toString(36).toUpperCase()}`
+}
+
 // ─── Build riga ──────────────────────────────────────────────────────────────
 
 function buildRow(
@@ -116,9 +151,14 @@ function buildRow(
     return i !== undefined ? row[i] : null
   }
 
-  const nr_acquisto = toStr(g('nr_acquisto'))
   const data = toDate(g('data'))
-  if (!nr_acquisto || !data) return null
+  if (!data) return null
+
+  const fornitore = toStr(g('fornitore')) ?? ''
+  const descrizione = toStr(g('descrizione')) ?? ''
+  const imponibile = toNum(g('imponibile'))
+
+  const nr_acquisto = toStr(g('nr_acquisto')) ?? syntheticNr(data, fornitore, descrizione, imponibile)
 
   const centro_costo = toStr(g('centro_costo'))
   const { cc_tipo, cc_sede, cc_cliente } = parseCentroCosto(centro_costo)
@@ -135,9 +175,9 @@ function buildRow(
     cc_sede,
     cc_cliente,
     categoria: toStr(g('categoria')),
-    fornitore: toStr(g('fornitore')) ?? '',
-    descrizione: toStr(g('descrizione')) ?? '',
-    targhe: extractTarghe(toStr(g('descrizione'))),
+    fornitore,
+    descrizione,
+    targhe: extractTarghe(descrizione),
     rinnovi: toRinnovi(g('rinnovi')),
     rimborso: null,
     partita_iva: toStr(g('partita_iva')),
@@ -145,7 +185,7 @@ function buildRow(
     comune: toStr(g('comune')),
     provincia: toStr(g('provincia')),
     paese: toStr(g('paese')),
-    imponibile: toNum(g('imponibile')),
+    imponibile,
     iva: toNum(g('iva')),
     rit_acconto: toNum(g('rit_acconto')),
     rit_prev: toNum(g('rit_prev')),
