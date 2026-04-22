@@ -1,6 +1,7 @@
 import type { Purchase } from '@/types'
 
 export interface MonthlyPoint {
+  key: string   // "YYYY-MM" — usato per drilldown dateRange
   mese: string
   imponibile: number
   iva: number
@@ -38,7 +39,7 @@ export function getMonthlyCashflow(purchases: Purchase[]): MonthlyPoint[] {
     const key = p.data.slice(0, 7)
     const mese = new Intl.DateTimeFormat('it-IT', { month: 'short', year: '2-digit' })
       .format(new Date(p.data + 'T12:00:00'))
-    const cur = map.get(key) ?? { mese, imponibile: 0, iva: 0, totale: 0 }
+    const cur = map.get(key) ?? { key, mese, imponibile: 0, iva: 0, totale: 0 }
     cur.imponibile = round2(cur.imponibile + Number(p.imponibile))
     cur.iva = round2(cur.iva + Number(p.iva))
     cur.totale = round2(cur.totale + Number(p.imponibile) + Number(p.iva))

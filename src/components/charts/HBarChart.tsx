@@ -1,22 +1,25 @@
-// Grafico a barre orizzontali riutilizzabile (CentroCosto, Fornitori, Paese)
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Cell,
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 import { CHART_COLORS, type ByLabel } from '@/lib/analytics'
+import type { FilterState } from '@/types'
 
 interface Props {
   data: ByLabel[]
   color?: string
+  onDrilldown?: (patch: Partial<FilterState>) => void
+  filterKey?: string
 }
 
-export default function HBarChart({ data, color }: Props) {
+export default function HBarChart({ data, color, onDrilldown, filterKey }: Props) {
   if (data.length === 0) {
     return <div className="h-[260px] flex items-center justify-center text-sm text-[#64748B]">Nessun dato</div>
   }
 
   const labelWidth = Math.min(140, Math.max(80, Math.max(...data.map(d => d.label.length)) * 7))
+  const clickable = Boolean(onDrilldown && filterKey)
 
   return (
     <ResponsiveContainer width="100%" height={Math.max(200, data.length * 36 + 20)}>
@@ -44,8 +47,19 @@ export default function HBarChart({ data, color }: Props) {
         <Tooltip
           formatter={(v) => [formatCurrency(Number(v ?? 0)), 'Imponibile']}
           contentStyle={{ border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 12 }}
+          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
         />
-        <Bar dataKey="valore" radius={[0, 4, 4, 0]} maxBarSize={28}>
+        <Bar
+          dataKey="valore"
+          radius={[0, 4, 4, 0]}
+          maxBarSize={28}
+          style={{ cursor: clickable ? 'pointer' : 'default' }}
+          onClick={(data) => {
+            const entry = data as unknown as ByLabel
+            if (!onDrilldown || !filterKey || entry.label === 'Altro') return
+            onDrilldown({ [filterKey]: [entry.label] } as Partial<FilterState>)
+          }}
+        >
           {data.map((_, i) => (
             <Cell key={i} fill={color ?? CHART_COLORS[i % CHART_COLORS.length]} />
           ))}

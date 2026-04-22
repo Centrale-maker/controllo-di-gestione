@@ -1,4 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, useCallback, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { SlidersHorizontal } from 'lucide-react'
 import { useFilters } from '@/hooks/useFilters'
 import { usePurchases } from '@/hooks/usePurchases'
@@ -6,6 +7,7 @@ import { useFacetedOptions } from '@/hooks/useFacetedOptions'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { getMonthlyCashflow, getByField, getRinnovi } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/utils'
+import type { FilterState } from '@/types'
 import FilterBottomSheet from '@/components/filters/FilterBottomSheet'
 import FilterChips from '@/components/filters/FilterChips'
 import DragFilterBar from '@/components/filters/DragFilterBar'
@@ -14,10 +16,17 @@ import CategorieChart from '@/components/charts/CategorieChart'
 import HBarChart from '@/components/charts/HBarChart'
 import RinnoviChart from '@/components/charts/RinnoviChart'
 
-function Card({ title, children }: { title: string; children: ReactNode }) {
+function Card({ title, children, hint }: { title: string; children: ReactNode; hint?: boolean }) {
   return (
     <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
-      <h3 className="text-sm font-semibold text-[#1A202C] mb-4">{title}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-[#1A202C]">{title}</h3>
+        {hint && (
+          <span className="text-[10px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded px-1.5 py-0.5 select-none">
+            clicca per filtrare
+          </span>
+        )}
+      </div>
       {children}
     </div>
   )
@@ -25,6 +34,7 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
 
 export default function Analytics() {
   const isMobile = useIsMobile()
+  const navigate = useNavigate()
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const { filters, setFilter, patchFilters, resetFilters, activeCount } = useFilters()
@@ -43,6 +53,11 @@ export default function Analytics() {
   const iva        = useMemo(() => purchases.reduce((s, p) => s + Number(p.iva), 0), [purchases])
 
   const filterProps = { filters, options, allRows, activeCount, setFilter, patchFilters, resetFilters }
+
+  const drillTo = useCallback((patch: Partial<FilterState>) => {
+    patchFilters(patch)
+    navigate('/dashboard')
+  }, [patchFilters, navigate])
 
   const charts = loading ? (
     <div className="flex items-center justify-center py-20">
@@ -69,23 +84,23 @@ export default function Analytics() {
 
       {/* Grafici */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Andamento mensile">
-          <CashflowChart data={monthly} />
+        <Card title="Andamento mensile" hint>
+          <CashflowChart data={monthly} onDrilldown={drillTo} />
         </Card>
-        <Card title="Spesa per categoria">
-          <CategorieChart data={categorie} />
+        <Card title="Spesa per categoria" hint>
+          <CategorieChart data={categorie} onDrilldown={drillTo} />
         </Card>
-        <Card title="Top 10 fornitori">
-          <HBarChart data={fornitori} color="#3B82F6" />
+        <Card title="Top 10 fornitori" hint>
+          <HBarChart data={fornitori} color="#3B82F6" onDrilldown={drillTo} filterKey="fornitore" />
         </Card>
-        <Card title="Centro di costo">
-          <HBarChart data={centroCosto} color="#10B981" />
+        <Card title="Centro di costo" hint>
+          <HBarChart data={centroCosto} color="#10B981" onDrilldown={drillTo} filterKey="centroCosto" />
         </Card>
-        <Card title="Ricorrente vs Una tantum">
-          <RinnoviChart data={rinnovi} />
+        <Card title="Ricorrente vs Una tantum" hint>
+          <RinnoviChart data={rinnovi} onDrilldown={drillTo} />
         </Card>
-        <Card title="Spesa per paese">
-          <HBarChart data={paese} color="#F59E0B" />
+        <Card title="Spesa per paese" hint>
+          <HBarChart data={paese} color="#F59E0B" onDrilldown={drillTo} filterKey="paese" />
         </Card>
       </div>
     </div>

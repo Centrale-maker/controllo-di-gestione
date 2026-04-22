@@ -1,10 +1,14 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 import { CHART_COLORS, type ByLabel } from '@/lib/analytics'
+import type { FilterState } from '@/types'
 
-interface Props { data: ByLabel[] }
+interface Props {
+  data: ByLabel[]
+  onDrilldown?: (patch: Partial<FilterState>) => void
+}
 
-export default function CategorieChart({ data }: Props) {
+export default function CategorieChart({ data, onDrilldown }: Props) {
   if (data.length === 0) {
     return <div className="h-[260px] flex items-center justify-center text-sm text-[#64748B]">Nessun dato</div>
   }
@@ -23,9 +27,18 @@ export default function CategorieChart({ data }: Props) {
           innerRadius="50%"
           outerRadius="72%"
           paddingAngle={2}
+          onClick={(data) => {
+            const entry = data as unknown as ByLabel
+            if (!onDrilldown || entry.label === 'Altro') return
+            onDrilldown({ categoria: [entry.label] })
+          }}
         >
-          {data.map((_, i) => (
-            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+          {data.map((entry, i) => (
+            <Cell
+              key={i}
+              fill={CHART_COLORS[i % CHART_COLORS.length]}
+              style={{ cursor: onDrilldown && entry.label !== 'Altro' ? 'pointer' : 'default' }}
+            />
           ))}
         </Pie>
         <Tooltip
