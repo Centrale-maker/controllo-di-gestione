@@ -8,6 +8,7 @@ import { getMonthlyCashflow, getByField, getRinnovi } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/utils'
 import FilterPanel from '@/components/filters/FilterPanel'
 import FilterBottomSheet from '@/components/filters/FilterBottomSheet'
+import FilterChips from '@/components/filters/FilterChips'
 import CashflowChart from '@/components/charts/CashflowChart'
 import CategorieChart from '@/components/charts/CategorieChart'
 import HBarChart from '@/components/charts/HBarChart'
@@ -104,6 +105,7 @@ export default function Analytics() {
             Filtri {activeCount > 0 && <span className="bg-[#1E3A5F] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{activeCount}</span>}
           </button>
         </div>
+        <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />
         {charts}
         <FilterBottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} {...filterProps} />
       </div>
@@ -119,7 +121,8 @@ export default function Analytics() {
       </aside>
 
       {/* Contenuto */}
-      <main className="flex-1 overflow-y-auto px-6 py-6">
+      <main className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+        <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />
         {charts}
       </main>
     </div>

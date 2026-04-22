@@ -11,6 +11,7 @@ import KPIStrip from '@/components/kpi/KPIStrip'
 import DataView from '@/components/tables/DataView'
 import FilterPanel from '@/components/filters/FilterPanel'
 import FilterBottomSheet from '@/components/filters/FilterBottomSheet'
+import FilterChips from '@/components/filters/FilterChips'
 import ExportDialog from '@/components/export/ExportDialog'
 
 export default function Dashboard() {
@@ -89,6 +90,8 @@ export default function Dashboard() {
           </button>
         )}
       </div>
+
+      <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />
 
       {!loading && (
         <div className="flex items-center justify-between gap-2">
