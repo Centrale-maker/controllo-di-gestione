@@ -232,9 +232,21 @@ export async function parseExcel(file: File): Promise<PurchaseInsert[]> {
     if (field) fieldIndex.set(field, i)
   })
 
-  return rows
+  const parsed = rows
     .slice(headerIdx + 1)
     .filter(row => (row as unknown[]).some(c => c !== null))
     .map(row => buildRow(fieldIndex, row as unknown[]))
     .filter((p): p is PurchaseInsert => p !== null)
+
+  // De-duplica chiavi (nr_acquisto, data) all'interno dello stesso batch.
+  // Se due righe generano lo stesso NOID-xxx aggiunge suffisso -2, -3, ecc.
+  const seen = new Map<string, number>()
+  for (const row of parsed) {
+    const key = `${row.nr_acquisto}|${row.data}`
+    const count = (seen.get(key) ?? 0) + 1
+    seen.set(key, count)
+    if (count > 1) row.nr_acquisto = `${row.nr_acquisto}-${count}`
+  }
+
+  return parsed
 }
