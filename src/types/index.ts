@@ -171,6 +171,8 @@ export interface Commessa {
   id: string              // ID univoco (EVT-001, ecc.)
   nome: string            // nome evento/progetto (da cc_cliente dei purchases)
   cliente: string | null  // cliente fatturato (da cr_cliente dei revenues)
+  crTipo: string | null   // tipo centro di ricavo (es. "Ricavi Evento")
+  ccTipo: string | null   // tipo centro di costo (es. "Produzione")
   ricavi: number          // SUM imponibile revenues
   costi: number           // SUM imponibile purchases
   margine: number         // ricavi - costi
