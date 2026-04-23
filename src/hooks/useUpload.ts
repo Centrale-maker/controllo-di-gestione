@@ -31,7 +31,10 @@ export function useUpload() {
   }
 
   async function handleFile(file: File) {
-    if (!user || !profile?.company_id) return
+    if (!user || !profile?.company_id) {
+      setState(s => ({ ...s, status: 'error', filename: file.name, error: 'Profilo utente non configurato correttamente. Contatta l\'amministratore.' }))
+      return
+    }
     const companyId = profile.company_id
     setState({ status: 'parsing', progress: 0, filename: file.name, result: null, error: null })
 
