@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCommesse } from '@/hooks/useCommesse'
 import CommesseChart from '@/components/charts/CommesseChart'
+import CommessaDetailModal from '@/components/charts/CommessaDetailModal'
 import { formatCurrency } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Minus, Search, X } from 'lucide-react'
 import type { Commessa } from '@/types'
@@ -130,11 +131,13 @@ function applyFilters(
 export default function CommesseView() {
   const { commesse, options, loading, error } = useCommesse()
 
-  const [search, setSearch]   = useState('')
-  const [crTipo, setCrTipo]   = useState<string[]>([])
-  const [ccTipo, setCcTipo]   = useState<string[]>([])
-  const [clienti, setClienti] = useState<string[]>([])
-  const [mostra, setMostra]   = useState<Mostra>('tutti')
+  const [search, setSearch]       = useState('')
+  const [crTipo, setCrTipo]       = useState<string[]>([])
+  const [ccTipo, setCcTipo]       = useState<string[]>([])
+  const [clienti, setClienti]     = useState<string[]>([])
+  const [mostra, setMostra]       = useState<Mostra>('tutti')
+  const [chartPage, setChartPage] = useState(0)
+  const [detailId, setDetailId]   = useState<string | null>(null)
 
   const filtered = useMemo(
     () => applyFilters(commesse, search, crTipo, ccTipo, clienti, mostra),
@@ -149,6 +152,7 @@ export default function CommesseView() {
     setCcTipo([])
     setClienti([])
     setMostra('tutti')
+    setChartPage(0)
   }
 
   const totRicavi  = filtered.reduce((s, c) => s + c.ricavi, 0)
@@ -260,10 +264,18 @@ export default function CommesseView() {
           {/* Grafico */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-[#1A202C]">Ricavi vs Costi per commessa</h3>
+              <div>
+                <h3 className="text-sm font-semibold text-[#1A202C]">Ricavi vs Costi per commessa</h3>
+                <p className="text-[11px] text-[#94A3B8] mt-0.5">Clicca su una colonna per il dettaglio dare/avere</p>
+              </div>
               <span className="text-xs text-[#64748B]">{filtered.length} commesse</span>
             </div>
-            <CommesseChart data={filtered} />
+            <CommesseChart
+              data={filtered}
+              page={chartPage}
+              onPageChange={setChartPage}
+              onBarClick={setDetailId}
+            />
           </div>
 
           {/* Tabella */}
@@ -284,7 +296,11 @@ export default function CommesseView() {
                 </thead>
                 <tbody>
                   {filtered.map((c, i) => (
-                    <tr key={c.id} className={`border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors ${i % 2 !== 0 ? 'bg-[#FAFBFC]' : ''}`}>
+                    <tr
+                      key={c.id}
+                      onClick={() => setDetailId(c.id)}
+                      className={`border-b border-[#F1F5F9] hover:bg-[#EFF6FF] cursor-pointer transition-colors ${i % 2 !== 0 ? 'bg-[#FAFBFC]' : ''}`}
+                    >
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs bg-[#EFF6FF] text-[#1E40AF] rounded px-1.5 py-0.5">{c.id}</span>
                       </td>
@@ -329,6 +345,11 @@ export default function CommesseView() {
           </div>
         </>
       )}
+
+      <CommessaDetailModal
+        commessaId={detailId}
+        onClose={() => setDetailId(null)}
+      />
     </div>
   )
 }
