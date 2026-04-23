@@ -32,9 +32,9 @@ export const EXPORT_COLUMNS: ExportColDef[] = [
 
   // Classificazione
   { key: 'categoria',        label: 'Categoria',         group: 'Classificazione', defaultChecked: true,  width: 20,                  getValue: p => p.categoria ?? '' },
-  { key: 'cc_tipo',          label: 'Tipo CC',           group: 'Classificazione', defaultChecked: true,  width: 16,                  getValue: p => p.cc_tipo ?? '' },
-  { key: 'cc_sede',          label: 'Sede',              group: 'Classificazione', defaultChecked: false, width: 16,                  getValue: p => p.cc_sede ?? '' },
-  { key: 'cc_cliente',       label: 'Cliente',           group: 'Classificazione', defaultChecked: false, width: 14,                  getValue: p => p.cc_cliente ?? '' },
+  { key: 'cc_tipo',          label: 'Centro di costo',   group: 'Classificazione', defaultChecked: true,  width: 16,                  getValue: p => p.cc_tipo ?? '' },
+  { key: 'cc_cliente',       label: 'Cliente',           group: 'Classificazione', defaultChecked: true,  width: 14,                  getValue: p => p.cc_cliente ?? '' },
+  { key: 'cc_sede',          label: 'ID Univoco',        group: 'Classificazione', defaultChecked: false, width: 16,                  getValue: p => p.cc_sede ?? '' },
   { key: 'centro_costo',     label: 'Centro Costo',      group: 'Classificazione', defaultChecked: false, width: 22,                  getValue: p => p.centro_costo ?? '' },
   { key: 'rinnovi',          label: 'Tipo Costo',        group: 'Classificazione', defaultChecked: true,  width: 16,                  getValue: p => p.rinnovi ?? '' },
 
@@ -84,10 +84,10 @@ export async function exportToExcel(
   const ncols = cols.length
 
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'IGS Financial Dashboard'
+  wb.creator = 'Adriana Comunicazioni Srl Dashboard'
   wb.created = new Date()
 
-  const ws = wb.addWorksheet('Report IGS', {
+  const ws = wb.addWorksheet('Report Adriana', {
     views: [{ state: 'frozen', ySplit: 4 }],
     pageSetup: { fitToPage: true, fitToWidth: 1, paperSize: 9 /* A4 */ },
   })
@@ -95,7 +95,7 @@ export async function exportToExcel(
   // ── Riga 1: Titolo ──────────────────────────────────────────────────────────
   ws.mergeCells(1, 1, 1, ncols)
   const titleCell = ws.getCell('A1')
-  titleCell.value = 'Italian Global Solution S.r.l. — Report Acquisti'
+  titleCell.value = 'Adriana Comunicazioni Srl — Report Acquisti'
   titleCell.font  = { name: 'Calibri', size: 14, bold: true, color: { argb: C.white } }
   titleCell.fill  = solidFill(C.igsBlue)
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
@@ -184,7 +184,7 @@ export async function exportToExcel(
   const url      = URL.createObjectURL(blob)
   const a        = document.createElement('a')
   a.href         = url
-  a.download     = `IGS_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+  a.download     = `Adriana_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

@@ -39,10 +39,10 @@ export default function Login() {
         {/* Logo / Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-[#1E3A5F] mb-4">
-            <span className="text-white text-xl font-bold">IGS</span>
+            <span className="text-white text-xl font-bold">AC</span>
           </div>
           <h1 className="text-2xl font-bold text-[#1A202C]">Financial Dashboard</h1>
-          <p className="text-sm text-[#64748B] mt-1">Italian Global Solution S.r.l.</p>
+          <p className="text-sm text-[#64748B] mt-1">Adriana Comunicazioni Srl</p>
         </div>
 
         {/* Form */}

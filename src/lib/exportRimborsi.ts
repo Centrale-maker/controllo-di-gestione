@@ -31,7 +31,7 @@ export async function exportRimborsi(
   periodoTo: string
 ): Promise<void> {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'IGS Financial Dashboard'
+  wb.creator = 'Adriana Comunicazioni Srl Dashboard'
   wb.created = new Date()
 
   const ws = wb.addWorksheet('Rimborsi', {
@@ -71,7 +71,7 @@ export async function exportRimborsi(
 
   // ── Intestazioni colonne ──────────────────────────────────────────────────
   const headers = [
-    'Data', 'Fornitore', 'Descrizione', 'Sede', 'Cliente',
+    'Data', 'Fornitore', 'Descrizione', 'Cliente', 'ID Univoco',
     'Periodo', 'Importo €', 'Stato', 'Data Rimborso',
   ]
   const colWidths = [12, 24, 40, 14, 12, 16, 14, 18, 14]
@@ -149,8 +149,8 @@ export async function exportRimborsi(
       fmtDate(p.data),
       p.fornitore,
       p.descrizione ?? '',
-      p.cc_sede ?? '',
       p.cc_cliente ?? '',
+      p.cc_sede ?? '',
       'Diretto',
       p.imponibile,
       isRimb ? 'Rimborsata ✓' : 'Da rimborsare',

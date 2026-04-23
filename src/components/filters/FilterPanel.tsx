@@ -100,7 +100,7 @@ export default function FilterPanel({
       {options.ccSede.length > 0 && (
         <>
           <div className="h-px bg-[#E2E8F0]" />
-          <CheckList label="Sede" options={options.ccSede} selected={filters.ccSede}
+          <CheckList label="ID Univoco" options={options.ccSede} selected={filters.ccSede}
             onChange={v => cc('ccSede', v)} />
         </>
       )}

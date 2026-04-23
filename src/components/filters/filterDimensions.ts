@@ -11,7 +11,7 @@ export interface FilterDimension {
 
 export const FILTER_DIMENSIONS: FilterDimension[] = [
   { id: 'ccCliente',  label: 'Cliente',         color: '#3B82F6', bgLight: '#EFF6FF', borderLight: '#BFDBFE', type: 'multiselect' },
-  { id: 'ccSede',     label: 'Sede',            color: '#8B5CF6', bgLight: '#F5F3FF', borderLight: '#DDD6FE', type: 'multiselect' },
+  { id: 'ccSede',     label: 'ID Univoco',      color: '#8B5CF6', bgLight: '#F5F3FF', borderLight: '#DDD6FE', type: 'multiselect' },
   { id: 'ccTipo',     label: 'Centro di costo', color: '#06B6D4', bgLight: '#ECFEFF', borderLight: '#A5F3FC', type: 'multiselect' },
   { id: 'categoria',  label: 'Categoria',       color: '#F59E0B', bgLight: '#FFFBEB', borderLight: '#FDE68A', type: 'multiselect' },
   { id: 'fornitore',  label: 'Fornitore',       color: '#10B981', bgLight: '#ECFDF5', borderLight: '#A7F3D0', type: 'multiselect' },

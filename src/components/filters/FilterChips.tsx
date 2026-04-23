@@ -21,7 +21,7 @@ const CASCADE_KEYS = new Set<string>(['ccTipo', 'ccSede', 'ccCliente', 'categori
 
 const ARRAY_FILTERS: Array<[keyof FilterState, string]> = [
   ['ccCliente', 'Cliente'],
-  ['ccSede',    'Sede'],
+  ['ccSede',    'ID Univoco'],
   ['ccTipo',    'Centro di costo'],
   ['categoria', 'Categoria'],
   ['fornitore', 'Fornitore'],

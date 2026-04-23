@@ -65,12 +65,12 @@ export default function Sidebar() {
         }`}
       >
         <div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
-          <span className="text-sm font-bold">IGS</span>
+          <span className="text-sm font-bold">AC</span>
         </div>
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">Financial Dashboard</p>
-            <p className="text-xs text-white/60 truncate">Italian Global Solution</p>
+            <p className="text-xs text-white/60 truncate">Adriana Comunicazioni Srl</p>
           </div>
         )}
       </div>

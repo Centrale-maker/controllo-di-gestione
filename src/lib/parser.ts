@@ -37,16 +37,16 @@ export interface CcParsed {
 }
 
 /**
- * Splitta il valore della colonna F su ", " (virgola + spazio).
- * Formato atteso: "CentrodiCosto, Sede, Cliente"
+ * Splitta il valore della colonna F su virgola.
+ * Formato atteso: "Centro di costo, Cliente, ID univoco"
  */
 function parseCentroCosto(raw: string | null): CcParsed {
   if (!raw) return { cc_tipo: null, cc_sede: null, cc_cliente: null }
   const parts = raw.split(',').map(p => p.trim()).filter(Boolean)
   return {
-    cc_tipo: parts[0] ?? null,
-    cc_sede: parts[1] ?? null,
-    cc_cliente: parts[2] ?? null,
+    cc_tipo:    parts[0] ?? null,   // Centro di costo
+    cc_cliente: parts[1] ?? null,   // Cliente
+    cc_sede:    parts[2] ?? null,   // ID univoco
   }
 }
 

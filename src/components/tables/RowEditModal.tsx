@@ -151,9 +151,9 @@ export default function RowEditModal({ purchase, options, onSave, onClose }: Pro
         {/* Campi */}
         <div className="px-5 py-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <SelectField label="Tipo CC"  value={cur('cc_tipo')   ?? null} opts={options.ccTipo}    onChange={v => set('cc_tipo', v)} />
-            <SelectField label="Sede"     value={cur('cc_sede')   ?? null} opts={options.ccSede}    onChange={v => set('cc_sede', v)} />
-            <SelectField label="Cliente"  value={cur('cc_cliente') ?? null} opts={options.ccCliente} onChange={v => set('cc_cliente', v)} />
+            <SelectField label="Centro di costo" value={cur('cc_tipo')    ?? null} opts={options.ccTipo}    onChange={v => set('cc_tipo', v)} />
+            <SelectField label="Cliente"        value={cur('cc_cliente') ?? null} opts={options.ccCliente} onChange={v => set('cc_cliente', v)} />
+            <SelectField label="ID Univoco"     value={cur('cc_sede')    ?? null} opts={options.ccSede}    onChange={v => set('cc_sede', v)} />
             <SelectField label="Categoria" value={cur('categoria') ?? null} opts={options.categoria}  onChange={v => set('categoria', v)} />
           </div>
           <TargheEditor
