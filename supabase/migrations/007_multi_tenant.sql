@@ -65,6 +65,7 @@ RETURNS UUID
 LANGUAGE SQL
 SECURITY DEFINER
 STABLE
+SET search_path = public
 AS $$
   SELECT company_id FROM profiles WHERE id = auth.uid()
 $$;
@@ -74,6 +75,7 @@ RETURNS BOOLEAN
 LANGUAGE SQL
 SECURITY DEFINER
 STABLE
+SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin'
