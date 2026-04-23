@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { ChevronUp, ChevronDown, Pencil, Trash2, ReceiptText } from 'lucide-react'
+import { ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import RinnoviPill from './RinnoviPill'
-import RimborsoPill from './RimborsoPill'
 import CellTooltip from './CellTooltip'
 import type { Purchase } from '@/types'
 import type { PlanBadge } from '@/hooks/usePlanBadges'
@@ -40,34 +38,14 @@ const COLS: Col[] = [
 
 const PAGE_SIZE = 50
 
-export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, onCreatePlan, highlightUploadId, planBadges }: Props) {
+export default function DataTable({ purchases, onEditRow, onDeleteRow, highlightUploadId }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'data', dir: 'desc' })
   const [page, setPage] = useState(0)
-  const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
-  const [savingRimborso, setSavingRimborso] = useState<Set<string>>(new Set())
 
   function toggleSort(key: SortKey | 'descrizione') {
     if (key === 'descrizione') return
     setSort(s => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
     setPage(0)
-  }
-
-  async function handleRinnovi(id: string, value: 'ricorrente' | 'una tantum' | null) {
-    setSavingRinnovi(s => new Set(s).add(id))
-    try {
-      await onRinnoviChange(id, value)
-    } finally {
-      setSavingRinnovi(s => { const next = new Set(s); next.delete(id); return next })
-    }
-  }
-
-  async function handleRimborso(id: string, value: 'rimborsata' | 'non rimborsata' | null) {
-    setSavingRimborso(s => new Set(s).add(id))
-    try {
-      await onRimborsoChange(id, value)
-    } finally {
-      setSavingRimborso(s => { const next = new Set(s); next.delete(id); return next })
-    }
   }
 
   const sorted = [...purchases].sort((a, b) => {
@@ -102,13 +80,7 @@ export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange
                   </span>
                 </th>
               ))}
-              <th className="px-4 py-3 font-medium text-[#64748B] text-left whitespace-nowrap">
-                Tipo costo
-              </th>
-              <th className="px-4 py-3 font-medium text-[#64748B] text-left whitespace-nowrap">
-                Rimborso
-              </th>
-              <th className="w-20" />
+              <th className="w-16" />
             </tr>
           </thead>
           <tbody>
@@ -132,36 +104,8 @@ export default function DataTable({ purchases, onRinnoviChange, onRimborsoChange
                     }
                   </td>
                 ))}
-                <td className="px-4 py-2.5">
-                  <RinnoviPill
-                    value={p.rinnovi ?? null}
-                    saving={savingRinnovi.has(p.id)}
-                    onChange={v => handleRinnovi(p.id, v)}
-                  />
-                </td>
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <RimborsoPill
-                      value={p.rimborso ?? null}
-                      saving={savingRimborso.has(p.id)}
-                      onChange={v => handleRimborso(p.id, v)}
-                    />
-                    {planBadges?.[p.id] && (
-                      <span className="text-xs bg-[#EFF6FF] text-[#1E3A5F] border border-[#BFDBFE] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">
-                        {planBadges[p.id].rimborsate}/{planBadges[p.id].totali}
-                      </span>
-                    )}
-                  </div>
-                </td>
                 <td className="px-2 py-2.5">
                   <div className="flex items-center gap-0.5">
-                    <button
-                      onClick={() => onCreatePlan(p)}
-                      className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#10B981] hover:bg-emerald-50 transition-colors"
-                      title="Crea piano di rimborso"
-                    >
-                      <ReceiptText size={14} />
-                    </button>
                     <button
                       onClick={() => onEditRow(p)}
                       className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"

@@ -3,14 +3,12 @@ import {
   LayoutDashboard,
   BarChart2,
   Upload,
-  ReceiptText,
   TrendingUp,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { path: '/dashboard',     label: 'Dashboard', icon: <LayoutDashboard size={22} /> },
   { path: '/analytics',     label: 'Analytics', icon: <BarChart2 size={22} /> },
-  { path: '/rimborsi',      label: 'Rimborsi',  icon: <ReceiptText size={22} /> },
   { path: '/upload',        label: 'Costi',     icon: <Upload size={22} /> },
   { path: '/upload-ricavi', label: 'Ricavi',    icon: <TrendingUp size={22} /> },
 ]

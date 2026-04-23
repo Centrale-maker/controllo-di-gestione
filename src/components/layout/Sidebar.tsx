@@ -4,13 +4,11 @@ import {
   LayoutDashboard,
   BarChart2,
   Upload,
-  History,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  ReceiptText,
   TrendingUp,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -22,12 +20,10 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-  { path: '/analytics', label: 'Analytics', icon: <BarChart2 size={20} /> },
-  { path: '/rimborsi', label: 'Rimborsi', icon: <ReceiptText size={20} /> },
-  { path: '/storico', label: 'Storico', icon: <History size={20} /> },
-  { path: '/settings', label: 'Impostazioni', icon: <Settings size={20} /> },
-  { path: '/upload', label: 'Upload Costi', icon: <Upload size={20} /> },
+  { path: '/dashboard',     label: 'Dashboard',     icon: <LayoutDashboard size={20} /> },
+  { path: '/analytics',     label: 'Analytics',     icon: <BarChart2 size={20} /> },
+  { path: '/settings',      label: 'Impostazioni',  icon: <Settings size={20} /> },
+  { path: '/upload',        label: 'Upload Costi',  icon: <Upload size={20} /> },
   { path: '/upload-ricavi', label: 'Upload Ricavi', icon: <TrendingUp size={20} /> },
 ]
 

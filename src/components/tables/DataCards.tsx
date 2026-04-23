@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { Pencil, Trash2, ReceiptText } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import RinnoviPill from './RinnoviPill'
-import RimborsoPill from './RimborsoPill'
 import type { Purchase } from '@/types'
 import type { PlanBadge } from '@/hooks/usePlanBadges'
 
@@ -20,30 +18,10 @@ interface Props {
 const INITIAL_COUNT = 30
 const LOAD_MORE = 20
 
-export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange, onEditRow, onDeleteRow, onCreatePlan, highlightUploadId, planBadges }: Props) {
+export default function DataCards({ purchases, onEditRow, onDeleteRow, highlightUploadId }: Props) {
   const [visible, setVisible] = useState(INITIAL_COUNT)
-  const [savingRinnovi, setSavingRinnovi]   = useState<Set<string>>(new Set())
-  const [savingRimborso, setSavingRimborso] = useState<Set<string>>(new Set())
 
   const slice = purchases.slice(0, visible)
-
-  async function handleRinnovi(id: string, value: 'ricorrente' | 'una tantum' | null) {
-    setSavingRinnovi(s => new Set(s).add(id))
-    try {
-      await onRinnoviChange(id, value)
-    } finally {
-      setSavingRinnovi(s => { const next = new Set(s); next.delete(id); return next })
-    }
-  }
-
-  async function handleRimborso(id: string, value: 'rimborsata' | 'non rimborsata' | null) {
-    setSavingRimborso(s => new Set(s).add(id))
-    try {
-      await onRimborsoChange(id, value)
-    } finally {
-      setSavingRimborso(s => { const next = new Set(s); next.delete(id); return next })
-    }
-  }
 
   return (
     <div className="space-y-2">
@@ -65,13 +43,6 @@ export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange
               <p className="text-sm font-bold text-[#1A202C] tabular-nums">
                 {formatCurrency(Number(p.imponibile))}
               </p>
-              <button
-                onClick={() => onCreatePlan(p)}
-                className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#10B981] hover:bg-emerald-50 transition-colors"
-                title="Crea piano di rimborso"
-              >
-                <ReceiptText size={14} />
-              </button>
               <button
                 onClick={() => onEditRow(p)}
                 className="p-1.5 rounded-md text-[#CBD5E0] hover:text-[#1E3A5F] hover:bg-[#F1F5F9] transition-colors"
@@ -98,21 +69,6 @@ export default function DataCards({ purchases, onRinnoviChange, onRimborsoChange
             {p.centro_costo && (
               <span className="text-xs bg-[#F1F5F9] text-[#64748B] px-2 py-0.5 rounded-full">
                 {p.centro_costo}
-              </span>
-            )}
-            <RinnoviPill
-              value={p.rinnovi ?? null}
-              saving={savingRinnovi.has(p.id)}
-              onChange={v => handleRinnovi(p.id, v)}
-            />
-            <RimborsoPill
-              value={p.rimborso ?? null}
-              saving={savingRimborso.has(p.id)}
-              onChange={v => handleRimborso(p.id, v)}
-            />
-            {planBadges?.[p.id] && (
-              <span className="text-xs bg-[#EFF6FF] text-[#1E3A5F] border border-[#BFDBFE] px-1.5 py-0.5 rounded-full font-medium">
-                {planBadges[p.id].rimborsate}/{planBadges[p.id].totali} quote
               </span>
             )}
           </div>
