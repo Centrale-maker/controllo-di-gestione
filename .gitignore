@@ -29,3 +29,4 @@ vite.config.ts.timestamp-*
 *.xlsx
 *.xls
 password*.md
+.vercel

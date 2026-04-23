@@ -126,6 +126,59 @@ export interface FilterState {
   searchText: string
 }
 
+// ─── Revenue ─────────────────────────────────────────────────────────────────
+
+export interface Revenue {
+  id: string
+  upload_id: string | null
+  data: string
+  prox_scadenza: string | null
+  documento: string | null
+  numero: string
+  serie: string | null
+  saldato: boolean
+  centro_ricavo: string | null
+  cr_tipo: string | null        // parte 1: categoria ricavo
+  cr_cliente: string | null     // parte 2: cliente nel centro
+  cr_id: string | null          // parte 3: ID univoco — chiave di join con purchases.cc_sede
+  cliente: string | null
+  comune: string | null
+  provincia: string | null
+  cap: string | null
+  paese: string | null
+  partita_iva: string | null
+  codice_fiscale: string | null
+  oggetto_interno: string | null
+  oggetto_visibile: string | null
+  imponibile: number
+  iva: number
+  cassa: number
+  altra_cassa: number
+  rivalsa: number
+  rit_acconto: number
+  rit_prev: number
+  lordo: number
+  contrassegnato: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type RevenueInsert = Omit<Revenue, 'id' | 'created_at' | 'updated_at'>
+
+// ─── Commessa ─────────────────────────────────────────────────────────────────
+
+export interface Commessa {
+  id: string              // ID univoco (EVT-001, ecc.)
+  nome: string            // nome evento/progetto (da cc_cliente dei purchases)
+  cliente: string | null  // cliente fatturato (da cr_cliente dei revenues)
+  ricavi: number          // SUM imponibile revenues
+  costi: number           // SUM imponibile purchases
+  margine: number         // ricavi - costi
+  marginePerc: number     // margine / ricavi * 100
+  nFatturePas: number
+  nFattureAtt: number
+}
+
 // ─── ExpensePlan ─────────────────────────────────────────────────────────────
 
 export interface ExpensePlan {

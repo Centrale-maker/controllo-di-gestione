@@ -1,8 +1,13 @@
 import { CheckCircle, XCircle, Plus, RefreshCw, Minus } from 'lucide-react'
-import type { UpsertResult } from '@/lib/upsert'
+
+interface ResultShape {
+  added: number
+  updated: number
+  unchanged: number
+}
 
 interface Props {
-  result: UpsertResult | null
+  result: ResultShape | null
   error: string | null
   filename: string
   onReset: () => void

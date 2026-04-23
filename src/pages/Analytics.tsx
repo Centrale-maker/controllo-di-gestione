@@ -16,6 +16,9 @@ import CashflowChart from '@/components/charts/CashflowChart'
 import CategorieChart from '@/components/charts/CategorieChart'
 import HBarChart from '@/components/charts/HBarChart'
 import RinnoviChart from '@/components/charts/RinnoviChart'
+import CommesseView from '@/components/charts/CommesseView'
+
+type Tab = 'costi' | 'commesse'
 
 function Card({ title, children, hint }: { title: string; children: ReactNode; hint?: boolean }) {
   return (
@@ -33,10 +36,31 @@ function Card({ title, children, hint }: { title: string; children: ReactNode; h
   )
 }
 
+function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
+  return (
+    <div className="flex gap-1 bg-[#F1F5F9] rounded-lg p-1 w-fit">
+      {(['costi', 'commesse'] as Tab[]).map(t => (
+        <button
+          key={t}
+          onClick={() => onChange(t)}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            active === t
+              ? 'bg-white text-[#1A202C] shadow-sm'
+              : 'text-[#64748B] hover:text-[#1A202C]'
+          }`}
+        >
+          {t === 'costi' ? 'Costi' : 'Commesse'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function Analytics() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<Tab>('costi')
 
   const { filters, setFilter, patchFilters, resetFilters, activeCount } = useFilters()
   const [activeDimIds, setActiveDimIds] = useState<string[]>(() => initialActiveDims(filters))
@@ -61,18 +85,17 @@ export default function Analytics() {
     navigate('/dashboard')
   }, [patchFilters, navigate])
 
-  const charts = loading ? (
+  const costiTab = loading ? (
     <div className="flex items-center justify-center py-20">
       <div className="w-8 h-8 border-2 border-[#1E3A5F] border-t-transparent rounded-full animate-spin" />
     </div>
   ) : (
     <div className="space-y-6">
-      {/* Riepilogo */}
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Totale lordo', value: formatCurrency(totale) },
-          { label: 'Imponibile', value: formatCurrency(imponibile) },
-          { label: 'IVA', value: formatCurrency(iva) },
+          { label: 'Imponibile',   value: formatCurrency(imponibile) },
+          { label: 'IVA',          value: formatCurrency(iva) },
         ].map(k => (
           <div key={k.label} className="bg-white rounded-xl border border-[#E2E8F0] px-3 py-3">
             <p className="text-[10px] font-medium text-[#64748B] uppercase tracking-wide truncate">{k.label}</p>
@@ -84,7 +107,6 @@ export default function Analytics() {
         {purchases.length.toLocaleString('it-IT')} fatture · {new Set(purchases.map(p => p.fornitore)).size} fornitori
       </p>
 
-      {/* Grafici */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Andamento mensile" hint>
           <CashflowChart data={monthly} onDrilldown={drillTo} />
@@ -114,16 +136,24 @@ export default function Analytics() {
       <div className="px-4 py-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-[#1A202C]">Analytics</h2>
-          <button
-            onClick={() => setSheetOpen(true)}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm font-medium text-[#64748B]"
-          >
-            <SlidersHorizontal size={15} />
-            Filtri {activeCount > 0 && <span className="bg-[#1E3A5F] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{activeCount}</span>}
-          </button>
+          {activeTab === 'costi' && (
+            <button
+              onClick={() => setSheetOpen(true)}
+              className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm font-medium text-[#64748B]"
+            >
+              <SlidersHorizontal size={15} />
+              Filtri {activeCount > 0 && <span className="bg-[#1E3A5F] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{activeCount}</span>}
+            </button>
+          )}
         </div>
-        <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />
-        {charts}
+        <TabBar active={activeTab} onChange={setActiveTab} />
+        {activeTab === 'costi' && (
+          <>
+            <FilterChips filters={filters} allRows={allRows} setFilter={setFilter} patchFilters={patchFilters} />
+            {costiTab}
+          </>
+        )}
+        {activeTab === 'commesse' && <CommesseView />}
         <FilterBottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} {...filterProps} />
       </div>
     )
@@ -132,18 +162,25 @@ export default function Analytics() {
   /* ── Desktop ── */
   return (
     <div className="flex flex-col h-full">
-      <DragFilterBar
-        filters={filters}
-        options={options}
-        allRows={allRows}
-        setFilter={setFilter}
-        patchFilters={patchFilters}
-        resetFilters={resetFilters}
-        activeDimIds={activeDimIds}
-        onActiveDimsChange={setActiveDimIds}
-      />
+      {activeTab === 'costi' && (
+        <DragFilterBar
+          filters={filters}
+          options={options}
+          allRows={allRows}
+          setFilter={setFilter}
+          patchFilters={patchFilters}
+          resetFilters={resetFilters}
+          activeDimIds={activeDimIds}
+          onActiveDimsChange={setActiveDimIds}
+        />
+      )}
       <main className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-        {charts}
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-[#1A202C]">Analytics</h2>
+          <TabBar active={activeTab} onChange={setActiveTab} />
+        </div>
+        {activeTab === 'costi'    && costiTab}
+        {activeTab === 'commesse' && <CommesseView />}
       </main>
     </div>
   )

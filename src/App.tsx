@@ -10,6 +10,7 @@ import Upload from '@/pages/Upload'
 import Settings from '@/pages/Settings'
 import SuperAdmin from '@/pages/SuperAdmin'
 import Rimborsi from '@/pages/Rimborsi'
+import UploadRicavi from '@/pages/UploadRicavi'
 
 function ComingSoon({ page }: { page: string }) {
   return (
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/rimborsi" element={<Rimborsi />} />
               <Route path="/upload" element={<Upload />} />
+              <Route path="/upload-ricavi" element={<UploadRicavi />} />
               <Route path="/storico" element={<ComingSoon page="Storico" />} />
               <Route path="/settings" element={<Settings />} />
 
