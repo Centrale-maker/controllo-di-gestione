@@ -168,49 +168,27 @@ CREATE POLICY "uploads: admin update" ON uploads FOR UPDATE
   );
 
 -- profiles
+-- NOTA: le policy su profiles NON devono chiamare is_super_admin() o get_my_company_id()
+-- perché quelle funzioni fanno SELECT su profiles → ricorsione infinita.
+-- Ogni utente può leggere/modificare solo il proprio profilo.
+-- La gestione utenti da parte degli admin avviene via service role lato server.
 DROP POLICY IF EXISTS "profiles: select own"       ON profiles;
 DROP POLICY IF EXISTS "profiles: admin select all" ON profiles;
 DROP POLICY IF EXISTS "profiles: update own"       ON profiles;
 DROP POLICY IF EXISTS "profiles: admin update all" ON profiles;
+DROP POLICY IF EXISTS "profiles: select"           ON profiles;
+DROP POLICY IF EXISTS "profiles: insert"           ON profiles;
+DROP POLICY IF EXISTS "profiles: update"           ON profiles;
+DROP POLICY IF EXISTS "profiles: delete"           ON profiles;
 
 CREATE POLICY "profiles: select" ON profiles FOR SELECT
-  USING (
-    is_super_admin() OR
-    auth.uid() = id OR
-    (
-      company_id = get_my_company_id() AND
-      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-    )
-  );
+  USING (auth.uid() = id);
 
 CREATE POLICY "profiles: insert" ON profiles FOR INSERT
-  WITH CHECK (
-    is_super_admin() OR
-    auth.uid() = id OR
-    (
-      company_id = get_my_company_id() AND
-      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-    )
-  );
+  WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "profiles: update" ON profiles FOR UPDATE
-  USING (
-    is_super_admin() OR
-    auth.uid() = id OR
-    (
-      company_id = get_my_company_id() AND
-      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-    )
-  );
-
-CREATE POLICY "profiles: delete" ON profiles FOR DELETE
-  USING (
-    is_super_admin() OR
-    (
-      company_id = get_my_company_id() AND
-      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-    )
-  );
+  USING (auth.uid() = id);
 
 -- cc_mapping: per company
 DROP POLICY IF EXISTS "cc_mapping_select" ON cc_mapping;
