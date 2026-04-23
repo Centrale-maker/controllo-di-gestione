@@ -43,7 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setCompany(null)
       }
-    } catch {
+    } catch (err) {
+      console.error('[fetchProfile] errore:', err)
       setProfile(null)
       setCompany(null)
     }
