@@ -24,7 +24,6 @@ function getOpts(dimId: string, options: FacetedOptions): string[] {
     case 'categoria': return options.categoria
     case 'fornitore': return options.fornitore
     case 'paese':     return options.paese
-    case 'targa':     return options.targhe
     default:          return []
   }
 }
@@ -37,13 +36,12 @@ function getSelected(dimId: string, filters: FilterState): string[] {
     case 'categoria': return filters.categoria
     case 'fornitore': return filters.fornitore
     case 'paese':     return filters.paese
-    case 'targa':     return filters.targa
     default:          return []
   }
 }
 
 function applyMultiselect(dimId: string, v: string[], allRows: FacetRow[], filters: FilterState,
-  setFilter: Props['setFilter'], patchFilters: Props['patchFilters'], activeDimIds?: string[]) {
+  _setFilter: Props['setFilter'], patchFilters: Props['patchFilters'], activeDimIds?: string[]) {
   switch (dimId) {
     case 'ccCliente': patchFilters(cascadeReset(allRows, 'ccCliente' as CascadeKey, v, filters, activeDimIds)); break
     case 'ccSede':    patchFilters(cascadeReset(allRows, 'ccSede'    as CascadeKey, v, filters, activeDimIds)); break
@@ -51,7 +49,6 @@ function applyMultiselect(dimId: string, v: string[], allRows: FacetRow[], filte
     case 'categoria': patchFilters(cascadeReset(allRows, 'categoria' as CascadeKey, v, filters, activeDimIds)); break
     case 'fornitore': patchFilters(cascadeReset(allRows, 'fornitore' as CascadeKey, v, filters, activeDimIds)); break
     case 'paese':     patchFilters(cascadeReset(allRows, 'paese'     as CascadeKey, v, filters, activeDimIds)); break
-    case 'targa':     setFilter('targa', v); break
   }
 }
 

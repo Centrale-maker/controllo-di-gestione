@@ -55,8 +55,7 @@ function DropZone({ children }: { children: React.ReactNode }) {
 function resetDim(dimId: string, setFilter: Props['setFilter'], patchFilters: Props['patchFilters'], allRows: FacetRow[], filters: FilterState, activeDimIds: string[]) {
   if (CASCADE_DIM_IDS.has(dimId)) {
     patchFilters(cascadeReset(allRows, dimId as CascadeKey, [], filters, activeDimIds))
-  } else if (dimId === 'targa')     { setFilter('targa', []) }
-  else if (dimId === 'rinnovi')     { setFilter('rinnovi', null) }
+  } else if (dimId === 'rinnovi')     { setFilter('rinnovi', null) }
   else if (dimId === 'rimborso')    { setFilter('rimborso', null) }
   else if (dimId === 'dateRange')   { setFilter('dateRange', { from: null, to: null }) }
 }
@@ -75,7 +74,6 @@ export default function DragFilterBar({ filters, options, allRows, setFilter, pa
       case 'categoria': return options.categoria.length > 0
       case 'fornitore': return options.fornitore.length > 0
       case 'paese':     return options.paese.length > 0
-      case 'targa':     return options.targhe.length > 0
       case 'rinnovi':   return options.hasRinnovi
       case 'rimborso':  return options.hasRimborso
       default:          return true

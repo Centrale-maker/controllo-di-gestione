@@ -26,7 +26,6 @@ const ARRAY_FILTERS: Array<[keyof FilterState, string]> = [
   ['categoria', 'Categoria'],
   ['fornitore', 'Fornitore'],
   ['paese',     'Paese'],
-  ['targa',     'Targa'],
 ]
 
 export default function FilterChips({ filters, allRows, setFilter, patchFilters, activeDimIds }: Props) {

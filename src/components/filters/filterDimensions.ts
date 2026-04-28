@@ -16,7 +16,6 @@ export const FILTER_DIMENSIONS: FilterDimension[] = [
   { id: 'categoria',  label: 'Categoria',       color: '#F59E0B', bgLight: '#FFFBEB', borderLight: '#FDE68A', type: 'multiselect' },
   { id: 'fornitore',  label: 'Fornitore',       color: '#10B981', bgLight: '#ECFDF5', borderLight: '#A7F3D0', type: 'multiselect' },
   { id: 'paese',      label: 'Paese',           color: '#84CC16', bgLight: '#F7FEE7', borderLight: '#D9F99D', type: 'multiselect' },
-  { id: 'targa',      label: 'Targa',           color: '#EC4899', bgLight: '#FDF2F8', borderLight: '#FBCFE8', type: 'multiselect' },
   { id: 'rinnovi',    label: 'Tipo costo',      color: '#EAB308', bgLight: '#FEFCE8', borderLight: '#FEF08A', type: 'radio-rinnovi' },
   { id: 'rimborso',   label: 'Rimborso',        color: '#EF4444', bgLight: '#FEF2F2', borderLight: '#FECACA', type: 'radio-rimborso' },
   { id: 'dateRange',  label: 'Periodo',         color: '#64748B', bgLight: '#F8FAFC', borderLight: '#CBD5E1', type: 'daterange' },
@@ -42,7 +41,6 @@ export function chipLabel(dimId: string, filters: import('@/types').FilterState)
     case 'categoria': return summaryLabel(filters.categoria)
     case 'fornitore': return summaryLabel(filters.fornitore)
     case 'paese':     return summaryLabel(filters.paese)
-    case 'targa':     return summaryLabel(filters.targa)
     case 'rinnovi':   return filters.rinnovi ?? 'Tutti'
     case 'rimborso':  return filters.rimborso ?? 'Tutti'
     case 'dateRange': {
@@ -64,7 +62,6 @@ export function initialActiveDims(filters: import('@/types').FilterState): strin
   if (filters.categoria.length > 0)  active.push('categoria')
   if (filters.fornitore.length > 0)  active.push('fornitore')
   if (filters.paese.length > 0)      active.push('paese')
-  if (filters.targa.length > 0)      active.push('targa')
   if (filters.rinnovi !== null)       active.push('rinnovi')
   if (filters.rimborso !== null)      active.push('rimborso')
   if (filters.dateRange.from !== null || filters.dateRange.to !== null) active.push('dateRange')

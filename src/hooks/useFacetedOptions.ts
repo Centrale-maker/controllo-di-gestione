@@ -11,7 +11,6 @@ export type FacetRow = {
   categoria: string | null
   fornitore: string | null
   paese: string | null
-  targhe: string[] | null
   rinnovi: string | null
   rimborso: string | null
   data: string | null
@@ -24,7 +23,6 @@ export interface FacetedOptions {
   categoria: string[]
   fornitore: string[]
   paese: string[]
-  targhe: string[]
   hasRinnovi: boolean
   hasRimborso: boolean
 }
@@ -58,10 +56,6 @@ function distinct(rows: FacetRow[], key: ScalarKey): string[] {
   return [...new Set(rows.map(r => r[key] as string | null).filter((v): v is string => !!v))].sort()
 }
 
-function distinctTarghe(rows: FacetRow[]): string[] {
-  return [...new Set(rows.flatMap(r => r.targhe ?? []))].sort()
-}
-
 function applyFilter(rows: FacetRow[], key: ScalarKey, selected: string[]): FacetRow[] {
   if (selected.length === 0) return rows
   return rows.filter(r => r[key] !== null && selected.includes(r[key] as string))
@@ -87,9 +81,6 @@ function applyNonCascadeFilters(rows: FacetRow[], filters: FilterState): FacetRo
       return true
     })
   }
-
-  if (filters.targa.length > 0)
-    result = result.filter(r => r.targhe !== null && filters.targa.some(t => r.targhe!.includes(t)))
 
   return result
 }
@@ -119,9 +110,6 @@ export function cascadeReset(
     filtered = applyFilter(filtered, rowKey, cleaned)
   }
 
-  const validTarghe = new Set(filtered.flatMap(r => r.targhe ?? []))
-  patch.targa = currentFilters.targa.filter(t => validTarghe.has(t))
-
   return patch
 }
 
@@ -136,7 +124,7 @@ export function useFacetedOptions(filters: FilterState, activeDimIds?: string[])
   useEffect(() => {
     supabase
       .from('purchases')
-      .select('cc_tipo, cc_sede, cc_cliente, categoria, fornitore, paese, targhe, rinnovi, rimborso, data')
+      .select('cc_tipo, cc_sede, cc_cliente, categoria, fornitore, paese, rinnovi, rimborso, data')
       .then(({ data }) => setAllRows((data ?? []) as FacetRow[]))
   }, [])
 
@@ -169,7 +157,6 @@ export function useFacetedOptions(filters: FilterState, activeDimIds?: string[])
       categoria:  dimOptions.categoria ?? [],
       fornitore:  dimOptions.fornitore ?? [],
       paese:      dimOptions.paese     ?? [],
-      targhe:     distinctTarghe(filtered),
       hasRinnovi: filtered.some(r => r.rinnovi !== null),
       hasRimborso: filtered.some(r => r.rimborso !== null),
     }
@@ -178,7 +165,7 @@ export function useFacetedOptions(filters: FilterState, activeDimIds?: string[])
     filters.ccTipo, filters.ccSede, filters.ccCliente,
     filters.categoria, filters.fornitore, filters.paese,
     filters.rimborso, filters.rinnovi,
-    filters.dateRange, filters.targa,
+    filters.dateRange,
     activeDimIds,
   ])
 

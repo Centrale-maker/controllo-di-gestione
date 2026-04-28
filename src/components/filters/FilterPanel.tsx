@@ -137,14 +137,6 @@ export default function FilterPanel({
           onChange={v => cc('paese', v)} />
       )}
 
-      {/* Targa — cascata dopo Paese */}
-      {options.targhe.length > 0 && (
-        <>
-          <div className="h-px bg-[#E2E8F0]" />
-          <CheckList label="Targa" options={options.targhe} selected={filters.targa}
-            onChange={v => setFilter('targa', v)} />
-        </>
-      )}
     </div>
   )
 }

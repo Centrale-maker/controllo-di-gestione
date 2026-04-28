@@ -54,10 +54,6 @@ export function usePurchases(filters: FilterState) {
         if (filters.rimborso) {
           query = query.eq('rimborso', filters.rimborso)
         }
-        if (filters.targa.length > 0) {
-          // ov = overlaps: restituisce righe il cui array targhe ha almeno una targa in comune con il filtro
-          query = query.filter('targhe', 'ov', `{${filters.targa.join(',')}}`)
-        }
         if (filters.paese.length > 0) {
           query = query.in('paese', filters.paese)
         }

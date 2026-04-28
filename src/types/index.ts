@@ -113,7 +113,6 @@ export interface FilterState {
   fornitore: string[]
   rinnovi: 'ricorrente' | 'una tantum' | null
   rimborso: 'rimborsata' | 'non rimborsata' | null
-  targa: string[]
   paese: string[]
   provincia: string[]
   imponibileRange: NumberRange
@@ -248,7 +247,6 @@ export const defaultFilterState: FilterState = {
   fornitore: [],
   rinnovi: null,
   rimborso: null,
-  targa: [],
   paese: [],
   provincia: [],
   imponibileRange: { min: null, max: null },
