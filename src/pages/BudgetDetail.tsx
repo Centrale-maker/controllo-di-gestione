@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import BudgetCentroSection from '@/components/budget/BudgetCentroSection'
 import BudgetTotalsBar from '@/components/budget/BudgetTotalsBar'
 import ConsuntivoTab from '@/components/budget/ConsuntivoTab'
+import CategoryCombobox from '@/components/budget/CategoryCombobox'
 
 const STATI = ['bozza', 'inviato', 'confermato', 'chiuso'] as const
 const STATO_LABEL: Record<string, string> = { bozza: 'Bozza', inviato: 'Inviato', confermato: 'Confermato', chiuso: 'Chiuso' }
@@ -150,19 +151,18 @@ export default function BudgetDetail() {
 
             {/* Aggiungi centro */}
             <div className="bg-white rounded-xl border border-dashed border-[#CBD5E1] p-4">
-              <p className="text-sm font-medium text-[#1A202C] mb-3">Aggiungi centro di costo</p>
+              <p className="text-sm font-medium text-[#1A202C] mb-3">Aggiungi categoria</p>
               <div className="flex gap-2">
-                <input
+                <CategoryCombobox
                   value={nuovoCentroNome}
-                  onChange={e => setNuovoCentroNome(e.target.value)}
-                  placeholder="Es. Catering, Allestimento, Logistica..."
-                  className="flex-1 border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                  onKeyDown={e => e.key === 'Enter' && addCentro()}
+                  onChange={setNuovoCentroNome}
+                  onConfirm={addCentro}
+                  placeholder="Es. Allestimento, Catering, Logistica..."
                 />
                 <button
                   onClick={addCentro}
                   disabled={addingCentro || !nuovoCentroNome.trim()}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5F8A] disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#1E3A5F] text-white text-sm font-medium rounded-lg hover:bg-[#2E5F8A] disabled:opacity-40 shrink-0"
                 >
                   {addingCentro ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                   Aggiungi

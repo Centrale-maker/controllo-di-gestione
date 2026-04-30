@@ -47,13 +47,13 @@ export function useBudgetDetail(budgetId: string | null) {
 
       const b = budget as Budget
       const [{ data: purchases }, { data: revenues }] = await Promise.all([
-        supabase.from('purchases').select('cc_tipo, imponibile').eq('cc_sede', b.codice),
+        supabase.from('purchases').select('categoria, imponibile').eq('cc_sede', b.codice),
         supabase.from('revenues').select('imponibile').eq('cr_id', b.codice),
       ])
 
       const costiReali = new Map<string, number>()
       for (const p of purchases ?? []) {
-        const k = p.cc_tipo ?? 'Altro'
+        const k = p.categoria ?? 'Altro'
         costiReali.set(k, (costiReali.get(k) ?? 0) + Number(p.imponibile))
       }
       const ricavi_reali = (revenues ?? []).reduce((s, r) => s + Number(r.imponibile), 0)
