@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Lock, Loader2, AlertCircle, FileDown } from 'lucide-react'
+import { ArrowLeft, Plus, Lock, Loader2, AlertCircle, FileDown, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useBudgetDetail } from '@/hooks/useBudgetDetail'
@@ -25,6 +25,8 @@ export default function BudgetDetail() {
   const [locking, setLocking] = useState(false)
   const [showLockConfirm, setShowLockConfirm] = useState(false)
   const [exportingPDF, setExportingPDF] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -61,6 +63,12 @@ export default function BudgetDetail() {
     setNuovoCentroNome('')
     setAddingCentro(false)
     reload()
+  }
+
+  async function deleteBudget() {
+    setDeleting(true)
+    await supabase.from('budgets').delete().eq('id', d.id)
+    navigate('/budget')
   }
 
   async function lockPreventivo() {
@@ -106,6 +114,13 @@ export default function BudgetDetail() {
               <span className="hidden sm:inline">PDF</span>
             </button>
           )}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            title="Elimina budget"
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#EF4444] hover:bg-red-50 transition-colors shrink-0"
+          >
+            <Trash2 size={18} />
+          </button>
           <select
             value={d.stato}
             onChange={e => updateStato(e.target.value)}
@@ -195,6 +210,44 @@ export default function BudgetDetail() {
       {/* Totals bar (solo in preventivo) */}
       {tab === 'preventivo' && (
         <BudgetTotalsBar detail={detail} totaleCosti={totaleCosti} totaleRicavi={totaleRicavi} />
+      )}
+
+      {/* Modal conferma eliminazione */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <Trash2 size={18} className="text-[#EF4444]" />
+              </div>
+              <div>
+                <p className="font-semibold text-[#1A202C]">Elimina budget</p>
+                <p className="text-xs text-[#64748B]">Azione irreversibile</p>
+              </div>
+            </div>
+            <div className="bg-[#F8FAFC] rounded-xl px-4 py-3 mb-4">
+              <p className="text-sm font-mono font-bold text-[#1E3A5F]">{d.codice}</p>
+              <p className="text-sm text-[#1A202C] mt-0.5">{d.nome}</p>
+              <p className="text-xs text-[#64748B]">{d.cliente}</p>
+            </div>
+            <p className="text-xs text-[#64748B] mb-5">
+              Verranno eliminati anche tutte le categorie e le voci associate. I dati nelle fatture importate non saranno modificati.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-2.5 rounded-lg border border-[#E2E8F0] text-sm text-[#64748B]">
+                Annulla
+              </button>
+              <button
+                onClick={deleteBudget}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-lg bg-[#EF4444] text-white text-sm font-semibold hover:bg-red-600 flex items-center justify-center gap-2"
+              >
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                Elimina
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal conferma lock */}

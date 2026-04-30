@@ -6,7 +6,7 @@ import BudgetCard from '@/components/budget/BudgetCard'
 import NewBudgetDialog from '@/components/budget/NewBudgetDialog'
 
 export default function Budget() {
-  const { budgets, loading, error } = useBudgets()
+  const { budgets, loading, error, reload } = useBudgets()
   const [showNew, setShowNew] = useState(false)
   const [search, setSearch] = useState('')
   const navigate = useNavigate()
@@ -91,7 +91,7 @@ export default function Budget() {
 
       {!loading && filtered.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map(b => <BudgetCard key={b.id} b={b} />)}
+          {filtered.map(b => <BudgetCard key={b.id} b={b} onDeleted={reload} />)}
         </div>
       )}
 
