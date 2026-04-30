@@ -234,6 +234,48 @@ export interface PlanReimbursement {
 
 export type ReimbursementRow = DirectReimbursement | PlanReimbursement
 
+// ─── Budget ──────────────────────────────────────────────────────────────────
+
+export type BudgetStato = 'bozza' | 'inviato' | 'confermato' | 'chiuso'
+
+export interface Budget {
+  id: string
+  company_id: string
+  codice: string
+  cliente: string
+  nome: string
+  descrizione: string | null
+  stato: BudgetStato
+  preventivo_bloccato: boolean
+  totale_bloccato: number | null
+  bloccato_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface BudgetCentro {
+  id: string
+  budget_id: string
+  company_id: string
+  nome: string
+  sort_order: number
+  created_at: string
+}
+
+export interface BudgetVoce {
+  id: string
+  budget_centro_id: string
+  budget_id: string
+  company_id: string
+  descrizione: string
+  costo_stimato: number
+  prezzo_vendita: number
+  note: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 // ─── Filters ─────────────────────────────────────────────────────────────────
 
 export const defaultFilterState: FilterState = {

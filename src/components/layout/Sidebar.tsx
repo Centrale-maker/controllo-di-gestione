@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ShieldCheck,
   TrendingUp,
+  Calculator,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -22,6 +23,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard',     label: 'Dashboard',     icon: <LayoutDashboard size={20} /> },
   { path: '/analytics',     label: 'Analytics',     icon: <BarChart2 size={20} /> },
+  { path: '/budget',        label: 'Budget',        icon: <Calculator size={20} /> },
   { path: '/settings',      label: 'Impostazioni',  icon: <Settings size={20} /> },
   { path: '/upload',        label: 'Upload Costi',  icon: <Upload size={20} /> },
   { path: '/upload-ricavi', label: 'Upload Ricavi', icon: <TrendingUp size={20} /> },

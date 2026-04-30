@@ -11,6 +11,8 @@ import Settings from '@/pages/Settings'
 import SuperAdmin from '@/pages/SuperAdmin'
 import Rimborsi from '@/pages/Rimborsi'
 import UploadRicavi from '@/pages/UploadRicavi'
+import Budget from '@/pages/Budget'
+import BudgetDetail from '@/pages/BudgetDetail'
 
 function ComingSoon({ page }: { page: string }) {
   return (
@@ -36,6 +38,8 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/rimborsi" element={<Rimborsi />} />
+              <Route path="/budget" element={<Budget />} />
+              <Route path="/budget/:id" element={<BudgetDetail />} />
               <Route path="/upload" element={<Upload />} />
               <Route path="/upload-ricavi" element={<UploadRicavi />} />
               <Route path="/storico" element={<ComingSoon page="Storico" />} />
