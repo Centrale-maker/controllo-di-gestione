@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useBudgetDetail } from '@/hooks/useBudgetDetail'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { exportBudgetPDF } from '@/lib/exportBudgetPDF'
+import { useCategorieOptions } from '@/hooks/useCategorieOptions'
 import BudgetCentroSection from '@/components/budget/BudgetCentroSection'
 import BudgetTotalsBar from '@/components/budget/BudgetTotalsBar'
 import ConsuntivoTab from '@/components/budget/ConsuntivoTab'
@@ -27,6 +28,7 @@ export default function BudgetDetail() {
   const [exportingPDF, setExportingPDF] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const categorieOptions = useCategorieOptions()
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -189,6 +191,7 @@ export default function BudgetDetail() {
                   value={nuovoCentroNome}
                   onChange={setNuovoCentroNome}
                   onConfirm={addCentro}
+                  options={categorieOptions}
                   placeholder="Es. Allestimento, Catering, Logistica..."
                 />
                 <button

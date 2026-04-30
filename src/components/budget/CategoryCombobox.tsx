@@ -1,16 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plus, Search } from 'lucide-react'
-import { useCategorieOptions } from '@/hooks/useCategorieOptions'
 
 interface Props {
   value: string
   onChange: (v: string) => void
   onConfirm: () => void
+  options: string[]
   placeholder?: string
 }
 
-export default function CategoryCombobox({ value, onChange, onConfirm, placeholder }: Props) {
-  const allOptions = useCategorieOptions()
+export default function CategoryCombobox({ value, onChange, onConfirm, options: allOptions, placeholder }: Props) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 

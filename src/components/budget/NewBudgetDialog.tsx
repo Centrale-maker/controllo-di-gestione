@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { X, Loader2, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import { useClientiOptions } from '@/hooks/useClientiOptions'
+import CategoryCombobox from '@/components/budget/CategoryCombobox'
 
 function generateCodice(count: number): string {
   const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -16,6 +18,7 @@ interface Props {
 
 export default function NewBudgetDialog({ onClose, onCreated }: Props) {
   const { company } = useAuth()
+  const clientiOptions = useClientiOptions()
   const [cliente, setCliente] = useState('')
   const [nome, setNome] = useState('')
   const [codice, setCodice] = useState('')
@@ -96,12 +99,12 @@ export default function NewBudgetDialog({ onClose, onCreated }: Props) {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#1A202C] mb-1.5">Cliente *</label>
-            <input
-              type="text"
+            <CategoryCombobox
               value={cliente}
-              onChange={e => setCliente(e.target.value)}
-              placeholder="Es. Comune di Roma"
-              className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+              onChange={setCliente}
+              onConfirm={() => {}}
+              options={clientiOptions}
+              placeholder="Cerca cliente esistente o creane uno nuovo..."
             />
           </div>
 
