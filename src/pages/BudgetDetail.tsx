@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Lock, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Lock, Loader2, AlertCircle, FileDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useBudgetDetail } from '@/hooks/useBudgetDetail'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { exportBudgetPDF } from '@/lib/exportBudgetPDF'
 import BudgetCentroSection from '@/components/budget/BudgetCentroSection'
 import BudgetTotalsBar from '@/components/budget/BudgetTotalsBar'
 import ConsuntivoTab from '@/components/budget/ConsuntivoTab'
@@ -23,6 +24,7 @@ export default function BudgetDetail() {
   const [nuovoCentroNome, setNuovoCentroNome] = useState('')
   const [locking, setLocking] = useState(false)
   const [showLockConfirm, setShowLockConfirm] = useState(false)
+  const [exportingPDF, setExportingPDF] = useState(false)
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -89,6 +91,21 @@ export default function BudgetDetail() {
             <p className="text-sm font-semibold text-[#1A202C] truncate">{d.nome}</p>
             <p className="text-xs text-[#64748B] truncate">{d.cliente}</p>
           </div>
+          {d.preventivo_bloccato && (
+            <button
+              onClick={async () => {
+                setExportingPDF(true)
+                try { exportBudgetPDF(d, company?.name ?? 'Azienda') }
+                finally { setExportingPDF(false) }
+              }}
+              disabled={exportingPDF}
+              title="Scarica PDF preventivo"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-xs font-semibold hover:bg-[#2E5F8A] transition-colors shrink-0 disabled:opacity-60"
+            >
+              {exportingPDF ? <Loader2 size={13} className="animate-spin" /> : <FileDown size={13} />}
+              <span className="hidden sm:inline">PDF</span>
+            </button>
+          )}
           <select
             value={d.stato}
             onChange={e => updateStato(e.target.value)}
