@@ -44,40 +44,50 @@ export default function ConsuntivoTab({ detail }: { detail: BudgetDetailData }) 
     )
   }
 
-  const totCostiStimati = consuntivo.centri.reduce((s, c) => s + c.costi_stimati, 0)
-  const totCostiReali   = consuntivo.centri.reduce((s, c) => s + c.costi_reali, 0)
+  const totCostiStimati  = consuntivo.centri.reduce((s, c) => s + c.costi_stimati, 0)
+  const totCostiReali    = consuntivo.costi_reali_totale
   const totRicaviStimati = consuntivo.centri.reduce((s, c) => s + c.ricavi_stimati, 0)
 
   return (
     <div className="space-y-6">
-      {/* Costi per centro */}
+      {/* Costi per categoria */}
       <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden">
         <div className="px-4 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0]">
-          <h3 className="text-sm font-semibold text-[#1A202C]">Costi per centro di costo</h3>
+          <h3 className="text-sm font-semibold text-[#1A202C]">Costi per categoria</h3>
         </div>
         <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 bg-[#FAFBFC] border-b border-[#F1F5F9]">
-          {['Centro', 'Stimato', 'Reale', 'Scostamento'].map(h => (
+          {['Categoria', 'Stimato', 'Reale', 'Scostamento'].map(h => (
             <p key={h} className="text-[10px] uppercase tracking-wide font-semibold text-[#94A3B8]">{h}</p>
           ))}
         </div>
         {consuntivo.centri.map(c => (
           <div key={c.nome} className="px-4 py-3 border-b border-[#F8FAFC] last:border-0">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-              <div>
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-medium text-[#1A202C]">{c.nome}</p>
+                {c.solo_reale && (
+                  <span className="text-[10px] bg-orange-50 text-orange-600 border border-orange-200 px-1.5 py-0.5 rounded-full font-medium">
+                    Non in budget
+                  </span>
+                )}
               </div>
               <div>
                 <p className="text-[10px] text-[#94A3B8] md:hidden">Stimato</p>
-                <p className="text-sm text-[#64748B]">{formatCurrency(c.costi_stimati)}</p>
+                <p className="text-sm text-[#64748B]">
+                  {c.costi_stimati > 0 ? formatCurrency(c.costi_stimati) : '—'}
+                </p>
               </div>
               <div>
                 <p className="text-[10px] text-[#94A3B8] md:hidden">Reale</p>
                 <p className="text-sm font-semibold text-[#1A202C]">{formatCurrency(c.costi_reali)}</p>
-                <ProgressBar stimato={c.costi_stimati} reale={c.costi_reali} />
+                {c.costi_stimati > 0 && <ProgressBar stimato={c.costi_stimati} reale={c.costi_reali} />}
               </div>
               <div>
                 <p className="text-[10px] text-[#94A3B8] md:hidden">Scostamento</p>
-                <Delta stimato={c.costi_stimati} reale={c.costi_reali} />
+                {c.costi_stimati > 0
+                  ? <Delta stimato={c.costi_stimati} reale={c.costi_reali} />
+                  : <span className="text-xs text-orange-500 font-medium">Non previsto</span>
+                }
               </div>
             </div>
           </div>

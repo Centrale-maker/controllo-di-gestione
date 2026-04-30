@@ -11,6 +11,7 @@ export interface ConsuntivoCentro {
   costi_stimati: number
   ricavi_stimati: number
   costi_reali: number
+  solo_reale: boolean   // categoria presente nelle fatture ma non nel budget
 }
 
 export interface BudgetDetailData extends Budget {
@@ -18,6 +19,7 @@ export interface BudgetDetailData extends Budget {
   consuntivo: {
     centri: ConsuntivoCentro[]
     ricavi_reali: number
+    costi_reali_totale: number  // totale TUTTE le fatture passive, indipendente dal budget
     has_data: boolean
   }
 }
@@ -57,6 +59,7 @@ export function useBudgetDetail(budgetId: string | null) {
         costiReali.set(k, (costiReali.get(k) ?? 0) + Number(p.imponibile))
       }
       const ricavi_reali = (revenues ?? []).reduce((s, r) => s + Number(r.imponibile), 0)
+      const costi_reali_totale = [...costiReali.values()].reduce((s, v) => s + v, 0)
 
       const vociMap = new Map<string, BudgetVoce[]>()
       for (const v of voci ?? []) {
@@ -70,17 +73,36 @@ export function useBudgetDetail(budgetId: string | null) {
         voci: vociMap.get(c.id) ?? [],
       }))
 
+      // Centri dal budget
+      const budgetCentriNomi = new Set(centriWithVoci.map(c => c.nome))
+      const consuntivoRows: ConsuntivoCentro[] = centriWithVoci.map(c => ({
+        nome: c.nome,
+        costi_stimati: c.voci.reduce((s, v) => s + Number(v.costo_stimato), 0),
+        ricavi_stimati: c.voci.reduce((s, v) => s + Number(v.prezzo_vendita), 0),
+        costi_reali: costiReali.get(c.nome) ?? 0,
+        solo_reale: false,
+      }))
+
+      // Categorie reali non presenti nel budget → aggiungo righe extra
+      for (const [categoria, importo] of costiReali.entries()) {
+        if (!budgetCentriNomi.has(categoria)) {
+          consuntivoRows.push({
+            nome: categoria,
+            costi_stimati: 0,
+            ricavi_stimati: 0,
+            costi_reali: importo,
+            solo_reale: true,
+          })
+        }
+      }
+
       setDetail({
         ...b,
         centri: centriWithVoci,
         consuntivo: {
-          centri: centriWithVoci.map(c => ({
-            nome: c.nome,
-            costi_stimati: c.voci.reduce((s, v) => s + Number(v.costo_stimato), 0),
-            ricavi_stimati: c.voci.reduce((s, v) => s + Number(v.prezzo_vendita), 0),
-            costi_reali: costiReali.get(c.nome) ?? 0,
-          })),
+          centri: consuntivoRows,
           ricavi_reali,
+          costi_reali_totale,
           has_data: (purchases?.length ?? 0) > 0 || (revenues?.length ?? 0) > 0,
         },
       })
