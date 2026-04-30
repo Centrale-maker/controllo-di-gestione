@@ -5,7 +5,8 @@ import type { Budget } from '@/types'
 
 export interface BudgetSummary extends Budget {
   totale_costi: number
-  totale_ricavi: number
+  totale_ricavi: number   // stimati (da budget_voci.prezzo_vendita)
+  ricavi_reali: number    // fatturati (da revenues.cr_id = codice)
   margine: number
   n_centri: number
   n_voci: number
@@ -35,6 +36,13 @@ export function useBudgets() {
       if (vErr) throw new Error(vErr.message)
       if (cErr) throw new Error(cErr.message)
 
+      // Ricavi reali: revenues.cr_id IN (codici dei budget)
+      const codici = (bs ?? []).map(b => b.codice).filter(Boolean)
+      const { data: revenues } = codici.length
+        ? await supabase.from('revenues').select('cr_id, imponibile').in('cr_id', codici)
+        : { data: [] }
+
+      // Aggrega stimati per budget_id
       const vociMap = new Map<string, { costi: number; ricavi: number; count: number }>()
       for (const v of voci ?? []) {
         const e = vociMap.get(v.budget_id) ?? { costi: 0, ricavi: 0, count: 0 }
@@ -42,6 +50,12 @@ export function useBudgets() {
         e.ricavi += Number(v.prezzo_vendita)
         e.count++
         vociMap.set(v.budget_id, e)
+      }
+
+      // Aggrega ricavi reali per codice
+      const ricaviRealiMap = new Map<string, number>()
+      for (const r of revenues ?? []) {
+        if (r.cr_id) ricaviRealiMap.set(r.cr_id, (ricaviRealiMap.get(r.cr_id) ?? 0) + Number(r.imponibile))
       }
 
       const centriMap = new Map<string, number>()
@@ -56,6 +70,7 @@ export function useBudgets() {
             ...(b as Budget),
             totale_costi: agg.costi,
             totale_ricavi: agg.ricavi,
+            ricavi_reali: ricaviRealiMap.get(b.codice) ?? 0,
             margine: agg.ricavi - agg.costi,
             n_centri: centriMap.get(b.id) ?? 0,
             n_voci: agg.count,

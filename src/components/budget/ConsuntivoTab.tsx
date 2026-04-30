@@ -2,27 +2,39 @@ import { TrendingDown, TrendingUp, Minus, AlertCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import type { BudgetDetailData } from '@/hooks/useBudgetDetail'
 
-function Delta({ stimato, reale }: { stimato: number; reale: number }) {
+// invert=true per ricavi: più fatturato = meglio (verde), meno = rosso
+function Delta({ stimato, reale, invert = false }: { stimato: number; reale: number; invert?: boolean }) {
   if (reale === 0 && stimato === 0) return <span className="text-[#94A3B8]">—</span>
   const delta = reale - stimato
-  const ok = delta <= 0
-  const Icon = delta === 0 ? Minus : ok ? TrendingDown : TrendingUp
+
+  let colorCls: string
+  if (delta === 0) {
+    colorCls = 'text-amber-500'
+  } else if (invert) {
+    colorCls = delta > 0 ? 'text-emerald-600' : 'text-red-500'
+  } else {
+    colorCls = delta <= 0 ? 'text-emerald-600' : 'text-red-500'
+  }
+
+  const Icon = delta === 0 ? Minus : delta > 0 ? TrendingUp : TrendingDown
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${ok ? 'text-emerald-600' : 'text-red-500'}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${colorCls}`}>
       <Icon size={12} />
       {delta > 0 ? '+' : ''}{formatCurrency(delta)}
     </span>
   )
 }
 
-function ProgressBar({ stimato, reale }: { stimato: number; reale: number }) {
+// invert=true per ricavi: sopra il 100% è verde (bene), sotto è rosso (male)
+function ProgressBar({ stimato, reale, invert = false }: { stimato: number; reale: number; invert?: boolean }) {
   if (stimato === 0) return null
   const pct = Math.min((reale / stimato) * 100, 120)
   const over = pct > 100
+  const good = invert ? over : !over
   return (
     <div className="mt-1.5 h-1.5 bg-[#F1F5F9] rounded-full overflow-hidden">
       <div
-        className={`h-full rounded-full transition-all ${over ? 'bg-red-400' : 'bg-emerald-400'}`}
+        className={`h-full rounded-full transition-all ${good ? 'bg-emerald-400' : 'bg-red-400'}`}
         style={{ width: `${Math.min(pct, 100)}%` }}
       />
     </div>
@@ -123,13 +135,14 @@ export default function ConsuntivoTab({ detail }: { detail: BudgetDetailData }) 
             <div>
               <p className="text-[10px] text-[#94A3B8] uppercase tracking-wide">Fatturati</p>
               <p className="text-base font-bold text-emerald-600 mt-0.5">{formatCurrency(consuntivo.ricavi_reali)}</p>
-              <ProgressBar stimato={detail.preventivo_bloccato ? (detail.totale_bloccato ?? 0) : totRicaviStimati} reale={consuntivo.ricavi_reali} />
+              <ProgressBar stimato={detail.preventivo_bloccato ? (detail.totale_bloccato ?? 0) : totRicaviStimati} reale={consuntivo.ricavi_reali} invert />
             </div>
             <div>
               <p className="text-[10px] text-[#94A3B8] uppercase tracking-wide">Scostamento</p>
               <Delta
                 stimato={detail.preventivo_bloccato ? (detail.totale_bloccato ?? 0) : totRicaviStimati}
                 reale={consuntivo.ricavi_reali}
+                invert
               />
             </div>
           </div>
